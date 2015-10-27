@@ -3,22 +3,20 @@ require 'nn';
 
 START = "$START$"
 FINISH = "$END$"
-FILE_PATH = "dataset/language_model.data"
+FILE_PATH = "dataset/wikipedia2text-extracted.txt"
+FILE_PATH = "dataset/sample.data"
 WORD_VEC_SIZE = 25
 WINDOW_SIZE = 5
+DICTIONARY_FILE = "dataset/dictionary.dict"
 
--- initialize Random Word Vec
-function initWordVec()
-    return torch.randn(WORD_VEC_SIZE)
-end
 
 -- read and Store Data
-function readFile(file_path)
+function readFileAndCreateDictorinary(file_path)
     local f = io.open(file_path)
     local store = {}
     local word_dict = {}
-    word_dict[START] = initWordVec()
-    word_dict[FINISH] = initWordVec()
+    word_dict[START] = torch.randn(WORD_VEC_SIZE)
+    word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
     while true do
         local l = f:read()
         if not l then break end
@@ -27,13 +25,15 @@ function readFile(file_path)
         for word in l:gmatch("%w+") do 
             table.insert(words, word)
             if not word_dict[word] then
-                word_dict[word] = initWordVec()
+                word_dict[word] = torch.randn(WORD_VEC_SIZE)
+            else
             end
         end
         table.insert(words,FINISH)
         table.insert(store, words)
     end
-    return store, word_dict
+    torch.save(DICTIONARY_FILE, word_dict)
+    return store
 end
 
 -- split into windows and make training data
@@ -59,15 +59,16 @@ function makeTrainingData(store, window_size, word_dict)
                 table.insert(data, FINISH)
                 word_idx = word_idx + 1
             end
+
             -- Get WordVector From Dictionary
             local word_vec_data = word_dict[data[1]]
-
             for i = 2, table.getn(data) do
                 word_vec_data = torch.cat(word_vec_data, word_dict[data[i]])
             end
             
             training_inst.data = word_vec_data
             training_inst.label = 1
+
             table.insert(train_data, training_inst)
         end   
     end
@@ -99,17 +100,25 @@ function trainAndUpdatedWordVec(net, criterion, input, output)
         net:backward(input, criterion:backward(net.output, output))
         
         print(net.gradInput)
+
+        input = input - input*net.gradInput
         
         -- (3) update parameters with a 0.01 learning rate
         net:updateParameters(0.01)
     end
-    return data
+    return input
 end
 
-store, word_dict = readFile(FILE_PATH)
-train_data = makeTrainingData(store, WINDOW_SIZE, word_dict)
-net, crit = construct_nn(WINDOW_SIZE, WORD_VEC_SIZE, 50)
-for idx, ins in ipairs(train_data) do
-    data = trainAndUpdatedWordVec(net, crit, ins.data, ins.label)
-    os.exit()
+function getTrainData()
+    store = readFileAndCreateDictorinary(FILE_PATH)
+    word_dict = torch.load(DICTIONARY_FILE)
+    train_data = makeTrainingData(store, WINDOW_SIZE, word_dict)
+    return train_data
 end
+
+print(getTrainData())
+--net, crit = construct_nn(WINDOW_SIZE, WORD_VEC_SIZE, 50)
+--for idx, ins in ipairs(train_data) do
+--   data = trainAndUpdatedWordVec(net, crit, ins.data, ins.label)
+--    os.exit()
+--end
