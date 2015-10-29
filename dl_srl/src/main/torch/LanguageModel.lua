@@ -100,7 +100,6 @@ function readBatchData(f, word_dict)
         for w_idx =1, #nl_split do
             local word = nl_split[w_idx]
         	local neg_word_vec = word_dict[word]
-            print(word, neg_word_vec)
             for idx = start_idx, end_idx do 
                 train_data[idx] = neg_word_vec[idx - start_idx + 1]
             end
@@ -133,7 +132,7 @@ function trainAndUpdatedWordVec(net, epoch)
 
 	    	batch_train_data, window_words = readBatchData(f, word_dict)
 
-	    	if not batch_train_data:size(0) == 0 then break end
+	    	if batch_train_data:size() == 0 then break end
 
 	    	-- Define Loss Function
     		local criterion = nn.ClassNLLCriterion()
