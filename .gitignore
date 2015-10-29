@@ -1,2 +1,8 @@
 .ipynb_checkpoints/
 target/
+.classpath
+.project
+.buildpath
+.pydevproject
+.settings/
+
