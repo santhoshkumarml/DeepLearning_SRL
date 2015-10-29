@@ -22,6 +22,7 @@ def makeWindowAndTrainingData(diction):
         with open(train_file_path, 'w') as tfp:
             for sent in fp:
                 words = sent.split()
+                # words = [w for w in words if w !='.']
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
                 for idx in range(0, len(words) - WINDOW_SIZE + 1):
                     pos_window_words = words[idx: idx + WINDOW_SIZE]

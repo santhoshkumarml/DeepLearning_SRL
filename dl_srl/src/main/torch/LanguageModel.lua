@@ -33,39 +33,39 @@ function saveWordVecForWordsInDict()
         if not l then break end
         local words = {}
         table.insert(words, START)
-        for word in l:gmatch("%w+") do 
-            table.insert(words, word)
-            if not word_dict[word] then
-                word_dict[word] = torch.randn(WORD_VEC_SIZE)
-            else
-            end
+        word = l
+        print(word)
+        table.insert(words, word)
+        if not word_dict[word] then
+            word_dict[word] = torch.randn(WORD_VEC_SIZE)
+        else
         end
     end
     torch.save(DICTIONARY_FILE, word_dict)
 end
    
-function construct_nn(window_size, word_vec_size, hidden_layer_nodes)
+function construct_nn()
     -- Add NN Layers
     local net = nn.Sequential()
 
-    net:add(nn.Linear(window_size * word_vec_size, hidden_layer_nodes))
-    net:add(nn.Sigmoid())
-    net:add(nn.Linear(hidden_layer_nodes, 2))
-    net:add(nn.LogSoftMax())
+    local inputs = WINDOW_SIZE * WORD_VEC_SIZE; 
+    local outputs = 2;
+    local HUs = 50;
 
+    net:add(nn.Linear(inputs, HUs))
+    net:add(nn.Sigmoid())
+    net:add(nn.Linear(HUs, outputs))
+    net:add(nn.LogSoftMax())
     return net
 end
 
 function readBatchData(f, word_dict)
 	local cnt_train_data = 1
-
 	local window_words = {}
-
 	local batch_train = {}
 
     while cnt_train_data <= BATCH_SIZE do
         local train_data = {}
-
         local pl = f:read()
         local nl = f:read()
 
@@ -77,8 +77,12 @@ function readBatchData(f, word_dict)
         local start_idx = 1
         local end_idx = WORD_VEC_SIZE
 
-        for word in pl:gmatch("%w+") do 
-            pos_word_vec = word_dict[word]
+        pl_split = string.split(pl," ")
+        nl_split = string.split(nl," ")
+
+        for w_idx =1, #pl_split do
+            local word = pl_split[w_idx]
+            local pos_word_vec = word_dict[word]
             for idx = start_idx, end_idx do 
                 train_data[idx] = pos_word_vec[idx - start_idx + 1]
             end
@@ -89,11 +93,14 @@ function readBatchData(f, word_dict)
 
         batch_train[2 * cnt_train_data - 1] = {torch.Tensor(train_data), 1}
 
+
         start_idx = 1
         end_idx = WORD_VEC_SIZE
 
-        for word in nl:gmatch("%w+") do 
-        	neg_word_vec = word_dict[word]
+        for w_idx =1, #nl_split do
+            local word = nl_split[w_idx]
+        	local neg_word_vec = word_dict[word]
+            print(word, neg_word_vec)
             for idx = start_idx, end_idx do 
                 train_data[idx] = neg_word_vec[idx - start_idx + 1]
             end
@@ -158,5 +165,5 @@ function trainAndUpdatedWordVec(net, epoch)
 end
 
 saveWordVecForWordsInDict()
-net = construct_nn(WINDOW_SIZE, WORD_VEC_SIZE, 50)
+net = construct_nn()
 trainAndUpdatedWordVec(net, EPOCH)
