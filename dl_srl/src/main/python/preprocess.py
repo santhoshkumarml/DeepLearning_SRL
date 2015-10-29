@@ -9,11 +9,13 @@ rsrc_path = os.path.join('/home/santhosh/workspaces/DeepLearning_SRL/dl_srl', 's
 data_file_path = os.path.join(rsrc_path, 'wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')
+diction_file_path = os.path.join(rsrc_path, 'diction.txt')
 WINDOW_SIZE = 5
 MID = WINDOW_SIZE/2
 
-START = "<s>"
-END = "</s>"
+START = '$START$'
+END = '$END$'
+UNK = 'UNK'
 
 def makeWindowAndTrainingData(diction):
     with open(op_data_file_path) as fp:
@@ -59,6 +61,16 @@ def tokenizeAndFormDict():
                 fp.write('\n')
     return diction
 
+def saveDictionaryWords(diction):
+    with open(diction_file_path, 'w') as fp:
+        for word in diction:
+            fp.write(word+"\n")
+
 if __name__ == '__main__':
     diction = tokenizeAndFormDict()
     makeWindowAndTrainingData(diction)
+    diction.add(START)
+    diction.add(END)
+    diction.add(END)
+    diction.add(UNK)
+    saveDictionaryWords(diction)
