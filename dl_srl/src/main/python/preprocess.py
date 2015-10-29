@@ -21,15 +21,14 @@ def makeWindowAndTrainingData(diction):
             for sent in fp:
                 words = sent.split()
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
-                size = min(WINDOW_SIZE, len(words))
-                idx = 0
-                while idx < len(words):
-                    pos_window_words = words[idx: idx+size]
+                print len(words) - WINDOW_SIZE + 1
+                for idx in range(0, len(words) - WINDOW_SIZE + 1):
+                    pos_window_words = words[idx: idx + WINDOW_SIZE]
 
                     main_word = pos_window_words[MID]
                     new_word = None
 
-                    while not new_word or new_word != main_word:
+                    while not new_word or new_word == main_word:
                         new_word = random.choice(tuple(diction))
 
                     neg_window_words = pos_window_words[:MID] + [new_word] + pos_window_words[MID+1:]
@@ -41,8 +40,6 @@ def makeWindowAndTrainingData(diction):
                     for word in neg_window_words:
                         tfp.write(word+" ")
                     tfp.write('\n')
-
-                    idx = idx+1
 
 
 def tokenizeAndFormDict():
