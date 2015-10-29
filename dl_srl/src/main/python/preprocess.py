@@ -1,6 +1,4 @@
 import nltk
-from nltk import *
-import re
 import os
 import random
 
@@ -56,7 +54,8 @@ def tokenizeAndFormDict():
             for sent in sents:
                 words =  nltk.word_tokenize(sent)
                 for word in words:
-                    fp.write(word.encode('utf-8')+" ")
+                    word = word.encode('utf-8')
+                    fp.write(word+" ")
                     diction.add(word)
                 fp.write('\n')
     return diction
@@ -70,7 +69,6 @@ if __name__ == '__main__':
     diction = tokenizeAndFormDict()
     makeWindowAndTrainingData(diction)
     diction.add(START)
-    diction.add(END)
     diction.add(END)
     diction.add(UNK)
     saveDictionaryWords(diction)

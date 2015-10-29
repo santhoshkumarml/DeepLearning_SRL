@@ -142,27 +142,27 @@ function trainAndUpdatedWordVec(net, epoch)
             trainer.maxIteration = 1
 
 			trainer:train(batch_train_data)
-
-			for i = 1, #window_words do
-				local words = window_words[i]
+	    end
+        word_dict = torch.load(DICTIONARY_FILE)
+        for i = 1, #window_words do
+                local words = window_words[i]
                 local start_idx = 1
                 local end_idx = WORD_VEC_SIZE
-				for w = 1, # words do 
-					local word_vec = word_dict[words[w]]
+                for w = 1, # words do 
+                    local word_vec = word_dict[words[w]]
                     local gradIp = net.gradInput
                     for idx = start_idx, end_idx do 
-        			     word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] - word_vec[idx - start_idx + 1] * net.gradInput[idx]
+                         word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] - word_vec[idx - start_idx + 1] * net.gradInput[idx]
                     end
-        			word_dict[words[w]] = word_vec
+                    word_dict[words[w]] = word_vec
                     start_idx = end_idx
                     end_idx = start_idx + WORD_VEC_SIZE - 1
-        		end 
-        	end
-        	torch.save(DICTIONARY_FILE, word_dict)
-	    end
+                end 
+            end
+        torch.save(DICTIONARY_FILE, word_dict)
     end
 end
 
 saveWordVecForWordsInDict()
 net = construct_nn()
-trainAndUpdatedWordVec(net, 100)
+trainAndUpdatedWordVec(net, 2000)
