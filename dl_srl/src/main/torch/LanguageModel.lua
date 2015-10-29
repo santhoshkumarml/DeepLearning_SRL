@@ -1,13 +1,9 @@
 require 'torch';
 require 'nn';
 
-START = "$START$"
-FINISH = "$END$"
-FILE_PATH = "dataset/wikipedia2text-extracted.txt"
-FILE_PATH = "dataset/sample.data"
+FILE_PATH = "../resources/diction.txt"
 WORD_VEC_SIZE = 25
-WINDOW_SIZE = 5
-DICTIONARY_FILE = "dataset/dictionary.dict"
+DICTIONARY_FILE = "../resources/dictionary.dict"
 
 
 -- read and Store Data
@@ -61,10 +57,10 @@ function makeTrainingData(store, window_size, word_dict)
             end
 
             -- Get WordVector From Dictionary
-            local word_vec_data = word_dict[data[1]]
-            for i = 2, table.getn(data) do
-                word_vec_data = torch.cat(word_vec_data, word_dict[data[i]])
-            end
+            --local word_vec_data = word_dict[data[1]]
+            --for i = 2, table.getn(data) do
+            --    word_vec_data = torch.cat(word_vec_data, word_dict[data[i]])
+            --end
             
             training_inst.data = word_vec_data
             training_inst.label = 1
@@ -87,8 +83,9 @@ function construct_nn(window_size, word_vec_size, hidden_layer_nodes)
     return net, criterion
 end
 
-function trainAndUpdatedWordVec(net, criterion, input, output)
-    for i = 1, 5 do
+function trainAndUpdatedWordVec(net, criterion, epoch, input, output)
+    for e = 1, epoch do
+        for 
         -- feed it to the neural network and the criterion
         criterion:forward(net:forward(input), output)
 
@@ -106,17 +103,11 @@ function trainAndUpdatedWordVec(net, criterion, input, output)
         -- (3) update parameters with a 0.01 learning rate
         net:updateParameters(0.01)
     end
-    return input
 end
 
-function getTrainData()
-    store = readFileAndCreateDictorinary(FILE_PATH)
-    word_dict = torch.load(DICTIONARY_FILE)
-    train_data = makeTrainingData(store, WINDOW_SIZE, word_dict)
-    return train_data
-end
-
-print(getTrainData())
+-- store = readFileAndCreateDictorinary(FILE_PATH)
+-- word_dict = torch.load(DICTIONARY_FILE)
+-- train_data = makeTrainingData(store, WINDOW_SIZE, word_dict)
 --net, crit = construct_nn(WINDOW_SIZE, WORD_VEC_SIZE, 50)
 --for idx, ins in ipairs(train_data) do
 --   data = trainAndUpdatedWordVec(net, crit, ins.data, ins.label)

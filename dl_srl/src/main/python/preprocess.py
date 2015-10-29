@@ -1,16 +1,67 @@
 import nltk
 from nltk import *
 import re
-from nltk.tag.stanford import POSTagger
+import os
+import random
 
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data')
+rsrc_path = os.path.join('/home/santhosh/workspaces/DeepLearning_SRL/dl_srl', 'src/main/resources')
+data_file_path = os.path.join(rsrc_path, 'wikipedia2text-extracted.txt')
+op_data_file_path = os.path.join(rsrc_path, 'data.txt')
+train_file_path = os.path.join(rsrc_path, 'train_data.txt')
+WINDOW_SIZE = 5
+MID = WINDOW_SIZE/2
 
-with open(file_path) as f:
-    filelines = f.read()
-    filelines = filelines.replace('\r\n', ' ')
-    filelines = filelines.replace('\n', ' ')
-    sents = sent_detector.tokenize(filelines.decode('utf-8').stip())
-    # print type(filelines), len(filelines), filelines, genre_file_path
-    # filelines = filelines[0]
-    # print filelines
-    sents = sents[:1000]
+START = "<s>"
+END = "</s>"
+
+def makeWindowAndTrainingData(diction):
+    with open(op_data_file_path) as fp:
+        with open(train_file_path, 'w') as tfp:
+            for sent in fp:
+                words = sent.split()
+                words = [START for i in range(MID)] + words + [END for i in range(MID)]
+                size = min(WINDOW_SIZE, len(words))
+                idx = 0
+                while idx < len(words):
+                    pos_window_words = words[idx: idx+size]
+
+                    main_word = pos_window_words[MID]
+                    new_word = None
+
+                    while not new_word or new_word != main_word:
+                        new_word = random.choice(tuple(diction))
+
+                    neg_window_words = pos_window_words[:MID] + [new_word] + pos_window_words[MID+1:]
+
+                    for word in pos_window_words:
+                        tfp.write(word+" ")
+                    tfp.write('\n')
+
+                    for word in neg_window_words:
+                        tfp.write(word+" ")
+                    tfp.write('\n')
+
+                    idx = idx+1
+
+
+def tokenizeAndFormDict():
+    sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
+    diction = set()
+    with open(data_file_path) as f:
+        filelines = f.read()
+        filelines = filelines.replace('\r\n', ' ')
+        filelines = filelines.replace('\n', ' ')
+        sents = sent_detector.tokenize(filelines.decode('utf-8').strip())
+        with open(op_data_file_path, 'w') as fp:
+            for sent in sents:
+                words =  nltk.word_tokenize(sent)
+                for word in words:
+                    fp.write(word.encode('utf-8')+" ")
+                    diction.add(word)
+                fp.write('\n')
+    return diction
+
+if __name__ == '__main__':
+    diction = tokenizeAndFormDict()
+    makeWindowAndTrainingData(diction)
