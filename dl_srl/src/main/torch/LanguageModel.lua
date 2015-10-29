@@ -61,11 +61,11 @@ function readBatchData(f, word_dict)
 
 	local window_words = {}
 
-	local batch_train_data = torch.Tensor(BATCH_SIZE * 2, WORD_VEC_SIZE * WINDOW_SIZE)
-	local batch_train_label = torch.Tensor(BATCH_SIZE * 2)
 	local batch_train = {}
 
     while cnt_train_data <= BATCH_SIZE do
+        local train_data = torch.Tensor(WORD_VEC_SIZE * WINDOW_SIZE)
+
         local pl = f:read()
         local nl = f:read()
 
@@ -79,24 +79,30 @@ function readBatchData(f, word_dict)
 
         for word in pl:gmatch("%w+") do 
             pos_word_vec = word_dict[word]
-            batch_train_data[{2 * cnt_train_data - 1, {start_idx, end_idx}}] = pos_word_vec
-            batch_train_label[2 * cnt_train_data-1] = 1
+            for idx = start_idx, end_idx do 
+                train_data[idx] = pos_word_vec[idx - start_idx + 1]
+            end
             table.insert(pos_words, word)
             start_idx = end_idx + 1
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
+
+        batch_train[#batch_train] = {train_data, 1}
 
         start_idx = 1
         end_idx = WORD_VEC_SIZE
 
         for word in nl:gmatch("%w+") do 
         	neg_word_vec = word_dict[word]
-            batch_train_data[{2 * cnt_train_data, {start_idx, end_idx}}] = neg_word_vec
-            batch_train_label[2 * cnt_train_data] = 0
+            for idx = start_idx, end_idx do 
+                train_data[idx] = neg_word_vec[idx - start_idx + 1]
+            end
             table.insert(neg_words, word)
             start_idx = end_idx + 1
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
+
+        batch_train[#batch_train] = {train_data, 0}
 
         table.insert(window_words, pos_words)
         table.insert(window_words, neg_words)
@@ -104,11 +110,9 @@ function readBatchData(f, word_dict)
         cnt_train_data = cnt_train_data + 1
     end
 
-    batch_train.input = batch_train_data
-    batch_train.output = batch_train_label
+    function batch_train:size() return cnt_train_data * 2 end
 
-    print(batch_train_data)
-    print(batch_train_label)
+    print(batch_train:size())
 
     return  batch_train, window_words
 end
@@ -120,7 +124,7 @@ function trainAndUpdatedWordVec(net, epoch)
     	while true do
     		word_dict = torch.load(DICTIONARY_FILE)
 
-	    	train_data, window_words = readBatchData(f, word_dict)
+	    	batch_train_data, window_words = readBatchData(f, word_dict)
 
 	    	if not train_data then break end
 
@@ -129,7 +133,8 @@ function trainAndUpdatedWordVec(net, epoch)
 
 			local trainer = nn.StochasticGradient(net, criterion)
 			trainer.learningRate = 0.01
-			trainer:train(dataset)
+
+			trainer:train(batch_train_data)
 
 			print(net.gradInput)
 

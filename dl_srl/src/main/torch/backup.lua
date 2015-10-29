@@ -105,6 +105,96 @@ function trainAndUpdatedWordVec(net, criterion, epoch, input, output)
     end
 end
 
+unction readBatchData(f, word_dict)
+    local cnt_train_data = 0
+
+    local window_words = {}
+
+    local batch_train_data = {}
+    local batch_train_label = {}
+    local batch_train = {}
+
+    while cnt_train_data < BATCH_SIZE do
+        local pl = f:read()
+        local nl = f:read()
+        if not pl or not nl then break end
+
+        local pos_word_vec = 
+        local neg_word_vec = nil
+        local pos_words = {}
+        local neg_words = {}
+
+        for word in pl:gmatch("%w+") do 
+            if not pos_word_vec then
+                pos_word_vec = word_dict[word]
+            else
+                pos_word_vec = torch.cat(pos_word_vec, word_dict[word])
+            end
+            table.insert(pos_words, word)
+        end
+
+        for word in nl:gmatch("%w+") do 
+            if not neg_word_vec then
+                neg_word_vec = word_dict[word]
+            else
+                neg_word_vec = torch.cat(neg_word_vec, word_dict[word])
+            end
+            table.insert(neg_words, word)
+        end
+
+        table.insert(batch_train_data, pos_word_vec)
+        table.insert(batch_train_label, 1)
+
+        table.insert(batch_train_data, neg_word_vec)
+        table.insert(batch_train_label, 0)
+
+        table.insert(window_words, pos_words)
+        table.insert(window_words, neg_words)
+
+        cnt_train_data = cnt_train_data + 1
+    end
+
+    print(batch_train_data)
+    
+    batch_train.input = torch.Tensor(batch_train_data)
+    batch_train.output = torch.Tensor(batch_train_label)
+
+    return  batch_train, window_words
+end
+
+
+function trainAndUpdatedWordVec(net, epoch)
+    for e = 1, epoch do
+        local f = io.open(TRAIN_DATA_FILE_PATH)
+        while true do
+            word_dict = torch.load(DICTIONARY_FILE)
+
+            train_data, window_words = readBatchData(f, word_dict)
+
+            if not train_data then break end
+
+            -- Define Loss Function
+            local criterion = nn.ClassNLLCriterion()
+
+            local trainer = nn.StochasticGradient(net, criterion)
+            trainer.learningRate = 0.01
+            trainer:train(dataset)
+
+            print(net.gradInput)
+
+            for i in 1, #window_words do
+                words = window_words[i]
+                for w in 1, # words do 
+                    word_vec = word_dict[words[w]]
+                    word_vec = word_vec - word_vec * net.gradInput
+                    word_dict[words[w]] = word_vec
+                end 
+            end
+            torch.save(DICTIONARY_FILE, word_dict)
+        end
+    end
+end
+
 -- store = readFileAndCreateDictorinary(FILE_PATH)
 -- word_dict = torch.load(DICTIONARY_FILE)
 -- train_data = makeTrainingData(store, WINDOW_SIZE, word_dict)
