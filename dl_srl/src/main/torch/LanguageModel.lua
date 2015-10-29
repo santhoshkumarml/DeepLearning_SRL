@@ -50,7 +50,7 @@ function construct_nn(window_size, word_vec_size, hidden_layer_nodes)
 
     net:add(nn.Linear(window_size * word_vec_size, hidden_layer_nodes))
     net:add(nn.Sigmoid())
-    net:add(nn.Linear(hidden_layer_nodes, 1))
+    net:add(nn.Linear(hidden_layer_nodes, 2))
     net:add(nn.LogSoftMax())
 
     return net
@@ -64,7 +64,7 @@ function readBatchData(f, word_dict)
 	local batch_train = {}
 
     while cnt_train_data <= BATCH_SIZE do
-        local train_data = torch.Tensor(WORD_VEC_SIZE * WINDOW_SIZE)
+        local train_data = {}
 
         local pl = f:read()
         local nl = f:read()
@@ -87,7 +87,7 @@ function readBatchData(f, word_dict)
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
 
-        batch_train[#batch_train] = {train_data, 1}
+        batch_train[2 * cnt_train_data - 1] = {torch.Tensor(train_data), 1}
 
         start_idx = 1
         end_idx = WORD_VEC_SIZE
@@ -102,7 +102,7 @@ function readBatchData(f, word_dict)
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
 
-        batch_train[#batch_train] = {train_data, 0}
+        batch_train[2 * cnt_train_data] = {torch.Tensor(train_data), 2}
 
         table.insert(window_words, pos_words)
         table.insert(window_words, neg_words)
@@ -110,9 +110,9 @@ function readBatchData(f, word_dict)
         cnt_train_data = cnt_train_data + 1
     end
 
-    function batch_train:size() return cnt_train_data * 2 end
+    cnt_train_data = cnt_train_data - 1
 
-    print(batch_train:size())
+    function batch_train:size() return cnt_train_data * 2 end
 
     return  batch_train, window_words
 end
@@ -126,24 +126,30 @@ function trainAndUpdatedWordVec(net, epoch)
 
 	    	batch_train_data, window_words = readBatchData(f, word_dict)
 
-	    	if not train_data then break end
+	    	if not batch_train_data:size(0) == 0 then break end
 
 	    	-- Define Loss Function
     		local criterion = nn.ClassNLLCriterion()
 
 			local trainer = nn.StochasticGradient(net, criterion)
 			trainer.learningRate = 0.01
+            trainer.maxIteration = 1
 
 			trainer:train(batch_train_data)
 
-			print(net.gradInput)
-
-			for i in 1, #window_words do
-				words = window_words[i]
-				for w in 1, # words do 
-					word_vec = word_dict[words[w]]
-        			word_vec = word_vec - word_vec * net.gradInput
+			for i = 1, #window_words do
+				local words = window_words[i]
+                local start_idx = 1
+                local end_idx = WORD_VEC_SIZE
+				for w = 1, # words do 
+					local word_vec = word_dict[words[w]]
+                    local gradIp = net.gradInput
+                    for idx = start_idx, end_idx do 
+        			     word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] - word_vec[idx - start_idx + 1] * net.gradInput[idx]
+                    end
         			word_dict[words[w]] = word_vec
+                    start_idx = end_idx
+                    end_idx = start_idx + WORD_VEC_SIZE - 1
         		end 
         	end
         	torch.save(DICTIONARY_FILE, word_dict)

@@ -23,7 +23,6 @@ def makeWindowAndTrainingData(diction):
             for sent in fp:
                 words = sent.split()
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
-                print len(words) - WINDOW_SIZE + 1
                 for idx in range(0, len(words) - WINDOW_SIZE + 1):
                     pos_window_words = words[idx: idx + WINDOW_SIZE]
 
