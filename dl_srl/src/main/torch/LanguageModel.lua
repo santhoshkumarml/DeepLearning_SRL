@@ -165,4 +165,4 @@ end
 
 saveWordVecForWordsInDict()
 net = construct_nn()
-trainAndUpdatedWordVec(net, EPOCH)
+trainAndUpdatedWordVec(net, 100)
