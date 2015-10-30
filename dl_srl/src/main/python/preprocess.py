@@ -1,6 +1,4 @@
 import nltk
-from nltk import *
-import re
 import os
 import random
 from collections import deque
@@ -53,8 +51,9 @@ def tokenizeAndFormDict():
             for sent in sents:
                 words = nltk.word_tokenize(sent)
                 for word in words:
-                    fp.write(word.encode('utf-8')+" ")
-                    diction.add(word.encode('utf-8'))
+                    word = word.encode('utf-8')
+                    fp.write(word+" ")
+                    diction.add(word)
                 fp.write('\n')
     return diction
 
