@@ -126,6 +126,7 @@ end
 
 function trainAndUpdatedWordVec(net, epoch)
     for e = 1, epoch do
+        print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
     	while true do
     		word_dict = torch.load(DICTIONARY_FILE)
