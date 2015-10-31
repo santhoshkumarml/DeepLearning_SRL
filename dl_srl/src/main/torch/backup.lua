@@ -85,7 +85,6 @@ end
 
 function trainAndUpdatedWordVec(net, criterion, epoch, input, output)
     for e = 1, epoch do
-        for 
         -- feed it to the neural network and the criterion
         criterion:forward(net:forward(input), output)
 
@@ -105,7 +104,7 @@ function trainAndUpdatedWordVec(net, criterion, epoch, input, output)
     end
 end
 
-unction readBatchData(f, word_dict)
+function readBatchData(f, word_dict)
     local cnt_train_data = 0
 
     local window_words = {}
@@ -119,7 +118,7 @@ unction readBatchData(f, word_dict)
         local nl = f:read()
         if not pl or not nl then break end
 
-        local pos_word_vec = 
+        local pos_word_vec = nil
         local neg_word_vec = nil
         local pos_words = {}
         local neg_words = {}

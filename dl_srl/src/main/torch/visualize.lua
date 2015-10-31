@@ -9,8 +9,8 @@ require 'torch'
 m = require 'manifold'
 
 WORDS_FILE_PATH = "../resources/diction.txt"
-DICTIONARY_FILE = "../resources/sample.dict"
-WORD_VEC_SIZE = 25
+DICTIONARY_FILE = "../resources/dictionary.dict"
+WORD_VEC_SIZE = 50
 
 function formData()
     --dictionary
@@ -26,14 +26,16 @@ function formData()
     while true do
         local l = f:read()
         if not l then break end
-        idx_words[widx] = l
-        words_idx[l] = widx
-        widx = widx + 1
-        word_vec = word_dict[l]:reshape(1, WORD_VEC_SIZE)
-        if dataset == nil then
-            dataset = word_vec
-        else
-            dataset = torch.cat(dataset, word_vec, 1)
+        if word_dict[l] == nil then
+            idx_words[widx] = l
+            words_idx[l] = widx
+            widx = widx + 1
+            word_vec = word_dict[l]:reshape(1, WORD_VEC_SIZE)
+            if dataset == nil then
+                dataset = word_vec
+            else
+                dataset = torch.cat(dataset, word_vec, 1)
+            end
         end
     end
     return dataset, idx_words, words_idx
