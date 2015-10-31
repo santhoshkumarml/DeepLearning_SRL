@@ -21,7 +21,9 @@ UNK = 'UNK'
 def makeWindowAndTrainingData(diction):
     with open(op_data_file_path) as fp:
         with open(train_file_path, 'w') as tfp:
+            sent_count = 1
             for sent in fp:
+                print 'Processing Line:', sent_count
                 words = sent.split()
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
                 pos_window_words = deque(words[0:WINDOW_SIZE+1])
@@ -37,6 +39,7 @@ def makeWindowAndTrainingData(diction):
                     pos_window_words.popleft()
                     pos_window_words.append(words[idx])
                     count += 1
+                sent_count += 1
 
 
 def tokenizeAndFormDict():
@@ -47,6 +50,7 @@ def tokenizeAndFormDict():
         filelines = filelines.replace('\r\n', ' ')
         filelines = filelines.replace('\n', ' ')
         sents = sent_detector.tokenize(filelines.decode('utf-8').strip())
+        print 'Total lines:',len(sents)
         with open(op_data_file_path, 'w') as fp:
             for sent in sents:
                 words = nltk.word_tokenize(sent)
