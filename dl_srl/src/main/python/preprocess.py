@@ -9,17 +9,21 @@ data_file_path = os.path.join(rsrc_path, 'wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')
 diction_file_path = os.path.join(rsrc_path, 'diction.txt')
-WINDOW_SIZE = 5
+WINDOW_SIZE = 11
 MID = WINDOW_SIZE/2
 
 START = '$START$'
 END = '$END$'
 UNK = 'UNK'
 
+#number of lines processed locally = 128170:The Tang capital of Chang'an ( today 's Xi'an ) became an important center for Buddhist thought .
+
 def makeWindowAndTrainingData(diction):
     with open(op_data_file_path) as fp:
         with open(train_file_path, 'w') as tfp:
+            sent_count = 1
             for sent in fp:
+                print 'Processing Line:', sent_count
                 words = sent.split()
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
 		pos_window_words = deque(words[0 : WINDOW_SIZE])
@@ -39,8 +43,7 @@ def makeWindowAndTrainingData(diction):
                     pos_window_words.popleft()
                     pos_window_words.append(words[idx])
                     count += 1
-
-
+                
 def tokenizeAndFormDict():
     sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
     diction = set()
@@ -49,9 +52,10 @@ def tokenizeAndFormDict():
         filelines = filelines.replace('\r\n', ' ')
         filelines = filelines.replace('\n', ' ')
         sents = sent_detector.tokenize(filelines.decode('utf-8').strip())
+        print 'Total lines:',len(sents)
         with open(op_data_file_path, 'w') as fp:
             for sent in sents:
-                words =  nltk.word_tokenize(sent)
+                words = nltk.word_tokenize(sent)
                 for word in words:
                     word = word.encode('utf-8')
                     fp.write(word+" ")

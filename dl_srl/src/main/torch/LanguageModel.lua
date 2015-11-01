@@ -7,9 +7,9 @@ TRAIN_DATA_FILE_PATH = "../resources/train_data.txt"
 
 DICTIONARY_FILE = "../resources/dictionary.dict"
 
-WORD_VEC_SIZE = 25
+WORD_VEC_SIZE = 50
 
-WINDOW_SIZE = 5
+WINDOW_SIZE = 11
 
 --will take BATCH_SIZE +ve and BATCH_SIZE -ve samples
 BATCH_SIZE = 5
@@ -59,10 +59,11 @@ function construct_nn()
     return net
 end
 
-function readBatchData(f, word_dict)
+function readBatchData(f)
 	local cnt_train_data = 1
 	local window_words = {}
 	local batch_train = {}
+	word_dict = torch.load(DICTIONARY_FILE)
 
     while cnt_train_data <= BATCH_SIZE do
         local train_data = {}
@@ -92,7 +93,6 @@ function readBatchData(f, word_dict)
         end
 
         batch_train[2 * cnt_train_data - 1] = {torch.Tensor(train_data), 1}
-
 
         start_idx = 1
         end_idx = WORD_VEC_SIZE
@@ -126,17 +126,13 @@ end
 
 function trainAndUpdatedWordVec(net, epoch)
     for e = 1, epoch do
+        print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
     	while true do
-    		word_dict = torch.load(DICTIONARY_FILE)
-
-	    	batch_train_data, window_words = readBatchData(f, word_dict)
-
+            batch_train_data, window_words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
-
 	    	-- Define Loss Function
     		local criterion = nn.ClassNLLCriterion()
-
 			local trainer = nn.StochasticGradient(net, criterion)
 			trainer.learningRate = 0.01
             trainer.maxIteration = 1
