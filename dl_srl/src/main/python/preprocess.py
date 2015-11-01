@@ -70,8 +70,8 @@ def saveDictionaryWords(diction):
 
 if __name__ == '__main__':
     diction = tokenizeAndFormDict()
-    makeWindowAndTrainingData(diction)
     diction.add(START)
     diction.add(END)
     diction.add(UNK)
     saveDictionaryWords(diction)
+    makeWindowAndTrainingData(diction)
