@@ -1,9 +1,10 @@
 import nltk
 import os
 import random
+from collections import deque
 
-nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data')
-rsrc_path = os.path.join('/home/santhosh/workspaces/DeepLearning_SRL/dl_srl', 'src/main/resources')
+nltk.data.path.append('/home/cnaik/nltk_data')
+rsrc_path = os.path.join('/home/snavanee/DeepLearning_SRL/dl_srl', 'src/main/resources')
 data_file_path = os.path.join(rsrc_path, 'wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')
@@ -20,26 +21,24 @@ def makeWindowAndTrainingData(diction):
         with open(train_file_path, 'w') as tfp:
             for sent in fp:
                 words = sent.split()
-                # words = [w for w in words if w !='.']
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
-                for idx in range(0, len(words) - WINDOW_SIZE + 1):
-                    pos_window_words = words[idx: idx + WINDOW_SIZE]
+		pos_window_words = deque(words[0 : WINDOW_SIZE])
+                count = 0
+                for idx in range(WINDOW_SIZE + 1, len(words)):
+                    new_word = words[MID+count]
+                    main_word = words[MID+count]
 
-                    main_word = pos_window_words[MID]
-                    new_word = None
-
-                    while not new_word or new_word == main_word:
+                    while new_word == main_word:
                         new_word = random.choice(tuple(diction))
 
-                    neg_window_words = pos_window_words[:MID] + [new_word] + pos_window_words[MID+1:]
+                    tfp.write(' '.join(pos_window_words) + '\n')
+                    pos_window_words[MID], temp = new_word, main_word
+                    tfp.write(' '.join(pos_window_words) + '\n')
 
-                    for word in pos_window_words:
-                        tfp.write(word+" ")
-                    tfp.write('\n')
-
-                    for word in neg_window_words:
-                        tfp.write(word+" ")
-                    tfp.write('\n')
+                    pos_window_words[MID] = temp
+                    pos_window_words.popleft()
+                    pos_window_words.append(words[idx])
+                    count += 1
 
 
 def tokenizeAndFormDict():
