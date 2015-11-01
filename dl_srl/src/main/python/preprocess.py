@@ -28,7 +28,7 @@ def makeWindowAndTrainingData(diction):
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
                 pos_window_words = deque(words[0 : WINDOW_SIZE])
                 count = 0
-                for idx in range(WINDOW_SIZE + 1, len(words)):
+                for idx in range(WINDOW_SIZE, len(words)):
                     new_word = words[MID+count]
                     main_word = words[MID+count]
 
