@@ -1,26 +1,6 @@
 require 'torch';
 require 'nn';
-
-WORDS_FILE_PATH = "../resources/diction.txt"
-
-TRAIN_DATA_FILE_PATH = "../resources/train_data.txt"
-
-DICTIONARY_FILE = "../resources/dictionary.dict"
-
-WORD_VEC_SIZE = 50
-
-WINDOW_SIZE = 11
-
---will take BATCH_SIZE +ve and BATCH_SIZE -ve samples
-BATCH_SIZE = 5
-
-EPOCH = 1
-
-START = "$START$"
-
-FINISH = "$END$"
-
-
+require 'Constants';
 
 -- create and store word vectors for dictionary
 function saveWordVecForWordsInDict()
@@ -161,4 +141,4 @@ end
 
 saveWordVecForWordsInDict()
 net = construct_nn()
-trainAndUpdatedWordVec(net, 2000)
+trainAndUpdatedWordVec(net, EPOCH)

@@ -5,12 +5,9 @@
 -- Time: 7:39 PM
 -- To change this template use File | Settings | File Templates.
 --
-require 'torch'
+require 'torch';
+require 'Constants';
 m = require 'manifold'
-
-WORDS_FILE_PATH = "../resources/diction.txt"
-DICTIONARY_FILE = "../resources/dictionary.dict"
-WORD_VEC_SIZE = 50
 
 function formData()
     --dictionary
@@ -26,9 +23,9 @@ function formData()
     while true do
         local l = f:read()
         if not l then break end
-        if word_dict[l] == nil then
-            idx_words[widx] = l
-            words_idx[l] = widx
+        if word_dict[l] ~= nil then
+            --idx_words[widx] = l
+            --words_idx[l] = widx
             widx = widx + 1
             word_vec = word_dict[l]:reshape(1, WORD_VEC_SIZE)
             if dataset == nil then
@@ -36,9 +33,10 @@ function formData()
             else
                 dataset = torch.cat(dataset, word_vec, 1)
             end
+            word_dict[l] = nil
         end
     end
-    return dataset, idx_words, words_idx
+    return dataset
 end
 
 function plotWord2Vec(p)
@@ -62,10 +60,12 @@ function plotWord2Vec(p)
 
 end
 
-local dataset, idx_words, words_idx = formData()
-print(#idx_words)
+local dataset = formData()
+ds = m.distances(dataset)
+print(ds)
+--local dataset = formData()
 -- basic functions:
-ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
+--ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
 --ds = m.distances(dataset) -- return the matrix of distances (L2)
 --for i = 1, 143 do
 --    print(idx_words[i])

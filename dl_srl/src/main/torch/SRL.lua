@@ -5,6 +5,8 @@
 -- Time: 10:50 PM
 -- To change this template use File | Settings | File Templates.
 --
+require 'Constants';
+
 function construct_SRL_NN()
      -- Add NN Layers
     local net = nn.Sequential()
