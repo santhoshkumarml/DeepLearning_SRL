@@ -61,8 +61,8 @@ function plotWord2Vec(p)
 end
 
 local dataset = formData()
-ds = m.distances(dataset)
-print(ds)
+--ds = m.distances(dataset)
+--print(ds)
 --local dataset = formData()
 -- basic functions:
 --ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
