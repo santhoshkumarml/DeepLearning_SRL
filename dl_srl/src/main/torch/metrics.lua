@@ -6,7 +6,9 @@
 -- To change this template use File | Settings | File Templates.
 --
 require 'torch';
+require 'nn';
 require 'Constants';
+require 'Heap'
 m = require 'manifold'
 
 function formData()
@@ -60,7 +62,33 @@ function plotWord2Vec(p)
 
 end
 
-local dataset = formData()
+function findTopKNeighbors(k)
+    local word_dict = torch.load(DICTIONARY_FILE)
+    local f = io.open(WORDS_FILE_PATH)
+    mlp = nn.CosineDistance()
+    x = word_dict['when']
+    h = Heap:new()
+    while true do
+        local l = f:read()
+        if not l then break end
+        if l ~= 'when' and word_dict[l] ~= nil then
+            distance = mlp:forward({x, word_dict[l]})[1]
+            if h:size() < k then
+                h:push(l, distance)
+            else
+                word, min_dis = h:pop()
+                if min_dis < distance then
+                    h:push(l, distance)
+                else
+                    h:push(word, min_dis)
+                end
+            end
+        end
+    end
+    while not h:isempty() do print(h:pop()) end
+end
+
+findTopKNeighbors(5)
 --ds = m.distances(dataset)
 --print(ds)
 --local dataset = formData()
