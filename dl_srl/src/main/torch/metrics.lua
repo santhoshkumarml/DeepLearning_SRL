@@ -26,7 +26,7 @@ function formData()
         local l = f:read()
         if not l then break end
         if word_dict[l] ~= nil then
-            --idx_words[widx] = l
+            idx_words[widx] = l
             --words_idx[l] = widx
             widx = widx + 1
             word_vec = word_dict[l]:reshape(1, WORD_VEC_SIZE)
@@ -38,7 +38,7 @@ function formData()
             word_dict[l] = nil
         end
     end
-    return dataset
+    return dataset, idx_words
 end
 
 function plotWord2Vec(p)
@@ -88,20 +88,20 @@ function findTopKNeighbors(k)
     while not h:isempty() do print(h:pop()) end
 end
 
-findTopKNeighbors(5)
---ds = m.distances(dataset)
---print(ds)
---local dataset = formData()
--- basic functions:
---ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
 --ds = m.distances(dataset) -- return the matrix of distances (L2)
---for i = 1, 143 do
---    print(idx_words[i])
---    for j = 1, 10 do
---        idx = ns[i][j]
---        print(idx, idx_words[idx])
---    end
---end
+local dataset, idx_words = formData()
+ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
+
+for i = 1, 143 do
+    word = idx_words[i]
+    if word == 'when' then
+        print(word)
+        for j = 1, 10 do
+            idx = ns[i][j]
+            print(idx, idx_words[idx])
+        end
+    end
+end
 --ts = m.removeDuplicates(dataset) -- remove duplicates from dataset
 
 -- embeddings:

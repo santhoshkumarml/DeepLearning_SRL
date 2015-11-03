@@ -4,7 +4,7 @@ import random
 from collections import deque
 
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data')
-rsrc_path = os.path.join('/home/santhosh/worspace/DeepLearning_SRL/dl_srl', 'src/main/resources')
+rsrc_path = os.path.join('/home/santhosh/workspaces/DeepLearning_SRL/dl_srl', 'src/main/resources')
 data_file_path = os.path.join(rsrc_path, 'wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')
