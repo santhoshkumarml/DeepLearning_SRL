@@ -105,14 +105,15 @@ end
 
 
 function trainAndUpdatedWordVec(net, epoch)
+    -- Define Loss Function
+    local criterion = nn.ClassNLLCriterion()
+    local trainer = nn.StochasticGradient(net, criterion)
+    trainer.learningRate = 0.01
+    trainer.maxIteration = 1
+
     for e = 1, epoch do
         print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
-        -- Define Loss Function
-        local criterion = nn.ClassNLLCriterion()
-        local trainer = nn.StochasticGradient(net, criterion)
-        trainer.learningRate = 0.01
-        trainer.maxIteration = 1
     	while true do
             batch_train_data, window_words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
