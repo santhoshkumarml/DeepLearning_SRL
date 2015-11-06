@@ -108,15 +108,14 @@ function trainAndUpdatedWordVec(net, epoch)
     for e = 1, epoch do
         print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
+        -- Define Loss Function
+        local criterion = nn.ClassNLLCriterion()
+        local trainer = nn.StochasticGradient(net, criterion)
+        trainer.learningRate = 0.01
+        trainer.maxIteration = 1
     	while true do
             batch_train_data, window_words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
-	    	-- Define Loss Function
-    		local criterion = nn.ClassNLLCriterion()
-			local trainer = nn.StochasticGradient(net, criterion)
-			trainer.learningRate = 0.01
-            trainer.maxIteration = 1
-
 			trainer:train(batch_train_data)
 	    end
         word_dict = torch.load(DICTIONARY_FILE)
@@ -126,9 +125,9 @@ function trainAndUpdatedWordVec(net, epoch)
                 local end_idx = WORD_VEC_SIZE
                 for w = 1, # words do 
                     local word_vec = word_dict[words[w]]
-                    local gradIp = net.gradInput
                     for idx = start_idx, end_idx do 
-                         word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] - word_vec[idx - start_idx + 1] * net.gradInput[idx]
+                         word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] -
+                                 word_vec[idx - start_idx + 1] * net.gradInput[idx]
                     end
                     word_dict[words[w]] = word_vec
                     start_idx = end_idx
