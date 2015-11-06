@@ -1,13 +1,10 @@
 --
--- Created by IntelliJ IDEA.
 -- User: santhosh
 -- Date: 11/2/15
--- Time: 10:50 PM
--- To change this template use File | Settings | File Templates.
 --
 require 'Constants';
 
-function construct_SRL_NN()
+function get_nn_for_srl()
      -- Add NN Layers
     local net = nn.Sequential()
 

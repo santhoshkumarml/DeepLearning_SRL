@@ -1,3 +1,8 @@
+--
+-- User: santhosh
+-- Date: 10/27/15
+--
+
 require 'torch';
 require 'nn';
 require 'Constants';

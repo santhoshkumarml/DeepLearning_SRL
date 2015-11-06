@@ -1,9 +1,6 @@
 --
--- Created by IntelliJ IDEA.
 -- User: santhosh
 -- Date: 10/29/15
--- Time: 7:39 PM
--- To change this template use File | Settings | File Templates.
 --
 require 'torch';
 require 'nn';
