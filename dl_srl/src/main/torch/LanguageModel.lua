@@ -150,9 +150,15 @@ function trainAndUpdatedWordVec(epoch)
         torch.save(LANGUAGE_NET_FILE, net)
     end
 end
+function doCleanup()
+    -- remove the serialized net and dictionary file
+    os.remove(LANGUAGE_NET_FILE)
+    os.remove(DICTIONARY_FILE)
+end
 
 --Main Function
 function main()
+    doCleanup()
     initOrUpdateWordVecForWordsInDict()
     trainAndUpdatedWordVec(EPOCH)
 end
