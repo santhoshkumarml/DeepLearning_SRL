@@ -10,3 +10,4 @@ dl_srl/src/main/torch/*.html
 dl_srl/src/main/resources/*data.txt
 dl_srl/src/main/resources/*.dict
 dl_srl/src/main/resources/diction.txt
+dl_srl/src/main/resources/*.net

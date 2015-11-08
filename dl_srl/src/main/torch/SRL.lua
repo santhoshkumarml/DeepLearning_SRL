@@ -9,13 +9,12 @@ function get_nn_for_srl(sentence_size)
     local net = nn.Sequential()
 
     local convInputFrame = 3;
-    local convInputFrameSize = convInputFrame * WORD_VEC_SIZE;
+    local convOutputFrame = 100;
     local outputs = 2;
     local HUs = 100;
-    local conVHUs = 10;
     local ksz = 3;
 
-    net:add(nn.TemporalConvolution(inputs, conVHUs, ksz))
+    net:add(nn.TemporalConvolution(convInputFrame, convOutputFrame, ksz))
     net:add(nn.TemporalMaxPooling(conVHUs, HUs))
     net:add(nn.Tanh())
     net:add(nn.Linear(HUs, outputs))
