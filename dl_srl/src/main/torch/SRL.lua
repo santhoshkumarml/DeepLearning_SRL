@@ -12,10 +12,10 @@ function get_nn_for_srl(sentence_size)
     local outputs = 2;
     local HUs = 100;
     local conVHUs = 100;
-    local reduced_l = 3;
+    local maxPoolingOutput = 3;
 
     net:add(nn.TemporalConvolution(inputs, conVHUs))
-    net:add(nn.TemporalMaxPooling(reduced_l))
+    net:add(nn.TemporalMaxPooling(conVHUs, maxPoolingOutput))
     net:add(nn.Tanh())
     net:add(nn.Linear(HUs, outputs))
     net:add(nn.LogSoftMax())
