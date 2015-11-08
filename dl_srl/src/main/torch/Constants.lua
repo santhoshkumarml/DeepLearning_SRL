@@ -10,9 +10,14 @@ TRAIN_DATA_FILE_PATH = "../resources/train_data.txt"
 
 DICTIONARY_FILE = "../resources/dictionary.dict"
 
-GOOGLE_PRETRAINED_WORD2_VEC_FILE = '../resources/GoogleNews-vectors-negative300.bin'
+GOOGLE_PRETRAINED_WORD2_VEC_FILE = '/media/santhosh/Data/workspace/nlp_project/SRL/word2vec/GoogleNews-vectors-negative300.bin'
 
-GOOGLE_WORD2VEC_OUTPUT_FILE_NAME = '../resources/word2vec.t7'
+GOOGLE_WORD2VEC_OUTPUT_FILE_NAME = '/media/santhosh/Data/workspace/nlp_project/SRL/word2vec/word2vec.t7'
+
+WORD2VEC = {
+    binfilename = GOOGLE_PRETRAINED_WORD2_VEC_FILE,
+    outfilename = GOOGLE_WORD2VEC_OUTPUT_FILE_NAME
+}
 
 WORD_VEC_SIZE = 50
 

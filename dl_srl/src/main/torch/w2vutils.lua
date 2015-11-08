@@ -1,15 +1,11 @@
 require 'Constants';
 torch.setdefaulttensortype('torch.FloatTensor')
 
-opt = {
-	binfilename = GOOGLE_PRETRAINED_WORD2_VEC_FILE,
-	outfilename = GOOGLE_WORD2VEC_OUTPUT_FILE_NAME
-}
 local w2vutils = {}
-if not paths.filep(opt.outfilename) then
+if not paths.filep(WORD2VEC.outfilename) then
 	w2vutils = require('bintot7.lua')
 else
-	w2vutils = torch.load(opt.outfilename)
+	w2vutils = torch.load(WORD2VEC.outfilename)
 	print('Done reading word2vec data.')
 end
 

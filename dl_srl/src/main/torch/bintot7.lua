@@ -1,4 +1,6 @@
-file = torch.DiskFile(opt.binfilename,'r')
+require 'Constants'
+
+file = torch.DiskFile(WORD2VEC.binfilename, 'r')
 local max_w = 50
 
 
@@ -29,11 +31,11 @@ size = file:readInt()
 
 local w2vvocab = {}
 local v2wvocab = {}
-local M = torch.FloatTensor(words,size)
+local M = torch.FloatTensor(words, size)
 
 --Reading Contents
 file:binary()
-for i = 1,words do
+for i = 1, words do
 	local str = readStringv2(file)
 	local vecrep = file:readFloat(300)
 	vecrep = torch.FloatTensor(vecrep)
@@ -50,7 +52,7 @@ word2vec = {}
 word2vec.M = M
 word2vec.w2vvocab = w2vvocab
 word2vec.v2wvocab = v2wvocab
-torch.save(opt.outfilename,word2vec)
+torch.save(WORD2VEC.outfilename, word2vec)
 print('Writing t7 File for future usage.')
 
 
