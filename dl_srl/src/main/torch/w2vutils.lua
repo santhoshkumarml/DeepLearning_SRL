@@ -1,8 +1,9 @@
+require 'Constants';
 torch.setdefaulttensortype('torch.FloatTensor')
 
 opt = {
-	binfilename = '/home/rotmanmi/Data/GoogleNews-vectors-negative300.bin',
-	outfilename = '/home/rotmanmi/Data/word2vec.t7'
+	binfilename = GOOGLE_PRETRAINED_WORD2_VEC_FILE,
+	outfilename = GOOGLE_WORD2VEC_OUTPUT_FILE_NAME
 }
 local w2vutils = {}
 if not paths.filep(opt.outfilename) then
@@ -14,7 +15,7 @@ end
 
 
 w2vutils.distance = function (self,vec,k)
-	local k = k or 1	
+	local k = k or 1
 	--self.zeros = self.zeros or torch.zeros(self.M:size(1));
 	local norm = vec:norm(2)
 	vec:div(norm)
@@ -30,12 +31,12 @@ w2vutils.distance = function (self,vec,k)
 end
 
 w2vutils.word2vec = function (self,word,throwerror)
-   local throwerror = throwerror or false
-   local ind = self.w2vvocab[word]
-   if throwerror then
+	local throwerror = throwerror or false
+	local ind = self.w2vvocab[word]
+	if throwerror then
 		assert(ind ~= nil, 'Word does not exist in the dictionary!')
-   end
-   return self.M[ind]
+	end
+	return self.M[ind]
 end
 
 return w2vutils
