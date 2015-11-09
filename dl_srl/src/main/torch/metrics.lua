@@ -91,12 +91,11 @@ ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sor
 
 for i = 1, 143 do
     word = idx_words[i]
-    if word == 'when' then
-        print(word)
-        for j = 1, 10 do
-            idx = ns[i][j]
-            print(idx, idx_words[idx])
-        end
+    --if word == 'when' then end
+    print(word)
+    for j = 1, 10 do
+        idx = ns[i][j]
+        print(idx, idx_words[idx])
     end
 end
 --ts = m.removeDuplicates(dataset) -- remove duplicates from dataset

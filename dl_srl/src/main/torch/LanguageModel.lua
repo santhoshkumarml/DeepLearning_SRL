@@ -1,19 +1,36 @@
+--
+-- User: santhosh
+-- Date: 10/27/15
+-- Language Model
+--
+
 require 'torch';
 require 'nn';
 require 'Constants';
 
-
--- create and store word vectors for dictionary
-function saveWordVecForWordsInDict()
+-- create/update and store word vectors for dictionary.
+function initOrUpdateWordVecForWordsInDict(netGradIp)
     local f = io.open(WORDS_FILE_PATH)
+    local isUpdate = true
     local word_dict = {}
-    word_dict[START] = torch.randn(WORD_VEC_SIZE)
-    word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
+
+    if not netGradIp then
+        isUpdate = false
+        word_dict[START] = torch.randn(WORD_VEC_SIZE)
+        word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
+    else
+        word_dict = torch.load(DICTIONARY_FILE)
+    end
+
+    -- netGradIp will be WORD_VEC_SIZE * WINDOWS_SIZE
+    -- To update a single word we will need to just pick the gradient of weights For Middle word
+    -- (i.e ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) to ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) + WORD_VECSIZE)
+    -- and update the word vector by word_vec = word_vec - word_vec * (above gradWeights)
+    local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
     while true do
         local l = f:read()
         if not l then break end
         local words = {}
-        -- Why this? ---redundant insertion
         table.insert(words, START)
         word = l
         print(word)
@@ -21,32 +38,42 @@ function saveWordVecForWordsInDict()
         if not word_dict[word] then
             word_dict[word] = torch.randn(WORD_VEC_SIZE)
         else
+            word_vec = word_dict[word]
+            for idx = 1, WORD_VEC_SIZE do
+                word_vec[idx] = word_vec[idx] - word_vec[idx] * netGradIp[gradIpOffset + idx]
+            end
+            word_dict[word] = word_vec
         end
     end
-    --torch.save(DICTIONARY_FILE, word_dict)
-    return word_dict
+    torch.save(DICTIONARY_FILE, word_dict)
 end
-   
-function construct_nn()
-    -- Add NN Layers
-    local net = nn.Sequential()
 
-    local inputs = WINDOW_SIZE * WORD_VEC_SIZE; 
-    local outputs = 2;
-    local HUs = 50;
+-- load NN from the file system if present or create a new one.
+function get_or_construct_nn()
+    local f = io.open(LANGUAGE_NET_FILE)
+    local net = {}
+    if not f then
+        net = nn.Sequential()
+        -- Add NN Layers
+        local inputs = WINDOW_SIZE * WORD_VEC_SIZE;
+        local outputs = 2;
+        local HUs = 50;
 
-    net:add(nn.Linear(inputs, HUs))
-    net:add(nn.Sigmoid())
-    net:add(nn.Linear(HUs, outputs))
-    net:add(nn.LogSoftMax())
+        net:add(nn.Linear(inputs, HUs))
+        net:add(nn.Sigmoid())
+        net:add(nn.Linear(HUs, outputs))
+        net:add(nn.LogSoftMax())
+    else
+        net = torch.load(LANGUAGE_NET_FILE)
+    end
     return net
 end
 
-function readBatchData(f, word_dict)
+-- Read a small batch of data for training.
+function readBatchData(f)
 	local cnt_train_data = 1
-	local window_words = {}
 	local batch_train = {}
-	--word_dict = torch.load(DICTIONARY_FILE)
+	word_dict = torch.load(DICTIONARY_FILE)
 
     while cnt_train_data <= BATCH_SIZE do
         local train_data = {}
@@ -67,8 +94,6 @@ function readBatchData(f, word_dict)
         for w_idx =1, #pl_split do
             local word = pl_split[w_idx]
             local pos_word_vec = word_dict[word]
-            -- See if optimization could be done here. [ Do you need to copy word vec to another DS?
-            -- What if you could use just the start and end Index needed for the copying later?
             for idx = start_idx, end_idx do 
                 train_data[idx] = pos_word_vec[idx - start_idx + 1]
             end
@@ -78,7 +103,6 @@ function readBatchData(f, word_dict)
         end
 
         batch_train[2 * cnt_train_data - 1] = {torch.Tensor(train_data), 1}
-
 
         start_idx = 1
         end_idx = WORD_VEC_SIZE
@@ -96,23 +120,21 @@ function readBatchData(f, word_dict)
 
         batch_train[2 * cnt_train_data] = {torch.Tensor(train_data), 2}
 
-        table.insert(window_words, pos_words)
-        table.insert(window_words, neg_words)
-
         cnt_train_data = cnt_train_data + 1
     end
 
     cnt_train_data = cnt_train_data - 1
 
-    -- Why do you need this?
     function batch_train:size() return cnt_train_data * 2 end
 
-    return  batch_train, window_words
+    return  batch_train
 end
 
 
-function trainAndUpdatedWordVec(net, epoch, word_dict)
+-- Train an online using small batch data and update the word vectors.
+function trainAndUpdatedWordVec(epoch)
     -- Define Loss Function
+    local net = get_or_construct_nn()
     local criterion = nn.ClassNLLCriterion()
     local trainer = nn.StochasticGradient(net, criterion)
     trainer.learningRate = 0.01
@@ -121,25 +143,29 @@ function trainAndUpdatedWordVec(net, epoch, word_dict)
     for e = 1, epoch do
         print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
+        -- Run Batch Training and Gradient descend
     	while true do
-            batch_train_data, window_words = readBatchData(f, word_dict)
+            batch_train_data = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
 			trainer:train(batch_train_data)
         end
-        print (net.gradInput, net.gradInput:size(), net.gradInput:nDimension())
-        print ("------------")
-        for word, word_vec in ipairs(word_dict) do
-            print (word)
-            print (word_vec:size(), word_vec:nDimension())
-            word_vec = word_vec - word_vec * net.gradInput
-            word_dict[word] = word_vec
-        end
-        --torch.save(DICTIONARY_FILE, word_dict)
-        break
+
+        -- Update Word Vector and the network
+        initOrUpdateWordVecForWordsInDict(net.gradInput)
+        torch.save(LANGUAGE_NET_FILE, net)
     end
-    -- save net
+end
+function doCleanup()
+    -- remove the serialized net and dictionary file
+    os.remove(LANGUAGE_NET_FILE)
+    os.remove(DICTIONARY_FILE)
 end
 
-word_dict = saveWordVecForWordsInDict()
-net = construct_nn()
-trainAndUpdatedWordVec(net, EPOCH, word_dict)
+--Main Function
+function main()
+    doCleanup()
+    initOrUpdateWordVecForWordsInDict()
+    trainAndUpdatedWordVec(EPOCH)
+end
+
+main()

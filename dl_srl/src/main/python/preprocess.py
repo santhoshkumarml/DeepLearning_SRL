@@ -9,7 +9,7 @@ data_file_path = os.path.join(rsrc_path, 'small_wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')
 diction_file_path = os.path.join(rsrc_path, 'diction.txt')
-WINDOW_SIZE = 5
+WINDOW_SIZE = 11
 MID = WINDOW_SIZE/2
 
 START = '$START$'

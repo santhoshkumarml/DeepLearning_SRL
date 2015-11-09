@@ -4,16 +4,19 @@
 --
 require 'Constants';
 
-function get_nn_for_srl()
+function get_nn_for_srl(sentence_size)
      -- Add NN Layers
     local net = nn.Sequential()
 
-    local inputs = WINDOW_SIZE * WORD_VEC_SIZE;
+    local convInputFrame = 3;
+    local convOutputFrame = 100;
     local outputs = 2;
-    local HUs = 50;
+    local HUs = 100;
+    local ksz = 3;
 
-    net:add(nn.Linear(inputs, HUs))
-    net:add(nn.Sigmoid())
+    net:add(nn.TemporalConvolution(convInputFrame, convOutputFrame, ksz))
+    net:add(nn.TemporalMaxPooling(sentence_size, HUs))
+    net:add(nn.Tanh())
     net:add(nn.Linear(HUs, outputs))
     net:add(nn.LogSoftMax())
     return net
