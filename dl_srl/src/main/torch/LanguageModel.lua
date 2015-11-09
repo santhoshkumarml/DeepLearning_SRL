@@ -1,11 +1,7 @@
---
--- User: santhosh
--- Date: 10/27/15
---
-
 require 'torch';
 require 'nn';
 require 'Constants';
+
 
 -- create and store word vectors for dictionary
 function saveWordVecForWordsInDict()
@@ -17,6 +13,7 @@ function saveWordVecForWordsInDict()
         local l = f:read()
         if not l then break end
         local words = {}
+        -- Why this? ---redundant insertion
         table.insert(words, START)
         word = l
         print(word)
@@ -26,7 +23,8 @@ function saveWordVecForWordsInDict()
         else
         end
     end
-    torch.save(DICTIONARY_FILE, word_dict)
+    --torch.save(DICTIONARY_FILE, word_dict)
+    return word_dict
 end
    
 function construct_nn()
@@ -44,11 +42,11 @@ function construct_nn()
     return net
 end
 
-function readBatchData(f)
+function readBatchData(f, word_dict)
 	local cnt_train_data = 1
 	local window_words = {}
 	local batch_train = {}
-	word_dict = torch.load(DICTIONARY_FILE)
+	--word_dict = torch.load(DICTIONARY_FILE)
 
     while cnt_train_data <= BATCH_SIZE do
         local train_data = {}
@@ -69,6 +67,8 @@ function readBatchData(f)
         for w_idx =1, #pl_split do
             local word = pl_split[w_idx]
             local pos_word_vec = word_dict[word]
+            -- See if optimization could be done here. [ Do you need to copy word vec to another DS?
+            -- What if you could use just the start and end Index needed for the copying later?
             for idx = start_idx, end_idx do 
                 train_data[idx] = pos_word_vec[idx - start_idx + 1]
             end
@@ -78,6 +78,7 @@ function readBatchData(f)
         end
 
         batch_train[2 * cnt_train_data - 1] = {torch.Tensor(train_data), 1}
+
 
         start_idx = 1
         end_idx = WORD_VEC_SIZE
@@ -103,13 +104,14 @@ function readBatchData(f)
 
     cnt_train_data = cnt_train_data - 1
 
+    -- Why do you need this?
     function batch_train:size() return cnt_train_data * 2 end
 
     return  batch_train, window_words
 end
 
 
-function trainAndUpdatedWordVec(net, epoch)
+function trainAndUpdatedWordVec(net, epoch, word_dict)
     -- Define Loss Function
     local criterion = nn.ClassNLLCriterion()
     local trainer = nn.StochasticGradient(net, criterion)
@@ -120,30 +122,24 @@ function trainAndUpdatedWordVec(net, epoch)
         print('Starting iteration:', e)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
     	while true do
-            batch_train_data, window_words = readBatchData(f)
+            batch_train_data, window_words = readBatchData(f, word_dict)
 	    	if batch_train_data:size() == 0 then break end
 			trainer:train(batch_train_data)
-	    end
-        word_dict = torch.load(DICTIONARY_FILE)
-        for i = 1, #window_words do
-                local words = window_words[i]
-                local start_idx = 1
-                local end_idx = WORD_VEC_SIZE
-                for w = 1, # words do 
-                    local word_vec = word_dict[words[w]]
-                    for idx = start_idx, end_idx do 
-                         word_vec[idx - start_idx + 1] = word_vec[idx - start_idx + 1] -
-                                 word_vec[idx - start_idx + 1] * net.gradInput[idx]
-                    end
-                    word_dict[words[w]] = word_vec
-                    start_idx = end_idx
-                    end_idx = start_idx + WORD_VEC_SIZE - 1
-                end 
-            end
-        torch.save(DICTIONARY_FILE, word_dict)
+        end
+        print (net.gradInput, net.gradInput:size(), net.gradInput:nDimension())
+        print ("------------")
+        for word, word_vec in ipairs(word_dict) do
+            print (word)
+            print (word_vec:size(), word_vec:nDimension())
+            word_vec = word_vec - word_vec * net.gradInput
+            word_dict[word] = word_vec
+        end
+        --torch.save(DICTIONARY_FILE, word_dict)
+        break
     end
+    -- save net
 end
 
-saveWordVecForWordsInDict()
+word_dict = saveWordVecForWordsInDict()
 net = construct_nn()
-trainAndUpdatedWordVec(net, EPOCH)
+trainAndUpdatedWordVec(net, EPOCH, word_dict)
