@@ -28,7 +28,7 @@ WINDOW_SIZE = 11
 --will take BATCH_SIZE +ve and BATCH_SIZE -ve samples
 BATCH_SIZE = 5
 
-EPOCH = 1000
+EPOCH = 2000
 
 START = "$START$"
 
