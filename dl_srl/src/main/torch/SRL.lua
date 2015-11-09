@@ -7,9 +7,9 @@ require 'torch'
 require 'nn'
 
 function get_temporal_nn_for_srl(sentence_size)
-     -- Add NN Layers
     local temporal_net = nn.Sequential()
     local ksz = 3
+    sentence_size = sentence_size - (2 * math.floor(ksz/2))
     local convOutputFrame = 100
     temporal_net:add(nn.TemporalConvolution(WORD_VEC_SIZE, convOutputFrame, ksz))
     temporal_net:add(nn.TemporalMaxPooling(sentence_size))
