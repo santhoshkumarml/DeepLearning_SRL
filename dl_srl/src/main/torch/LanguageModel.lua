@@ -28,9 +28,14 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
     -- and update the word vector by word_vec = word_vec - word_vec * (above gradWeights)
     local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
     while true do
-        local word = f:read()
-        if not word then break end
-        if not isUpdate then
+        local l = f:read()
+        if not l then break end
+        local words = {}
+        table.insert(words, START)
+        word = l
+        print(word)
+        table.insert(words, word)
+        if not word_dict[word] then
             word_dict[word] = torch.randn(WORD_VEC_SIZE)
         else
             word_vec = word_dict[word]
