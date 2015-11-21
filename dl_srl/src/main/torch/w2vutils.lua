@@ -10,7 +10,7 @@ else
 end
 
 
-w2vutils.distance = function (self,vec,k)
+w2vutils.distance = function (self, vec, k)
 	local k = k or 1
 	--self.zeros = self.zeros or torch.zeros(self.M:size(1));
 	local norm = vec:norm(2)
