@@ -8,15 +8,16 @@ require 'nn'
 
 function get_temporal_nn_for_srl()
     local f = io.open(SRL_TEMPORAL_NET_FILE)
-    local temporal_net = {}
+    local temporal_net = nn.Sequential()
+    local temporal_convolution = {}
     if not f then
-        temporal_net = nn.Sequential()
         local ksz = 3
         local convOutputFrame = 100
-        temporal_net:add(nn.TemporalConvolution(WORD_VEC_SIZE, convOutputFrame, ksz))
+        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE, convOutputFrame, ksz)
     else
-        temporal_net = torch.load(SRL_TEMPORAL_NET_FILE)
+        temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
     end
+    temporal_net:add(temporal_convolution)
     return temporal_net
 end
 
