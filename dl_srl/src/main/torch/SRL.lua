@@ -38,7 +38,7 @@ function get_constant_nn_after_polling()
     return constant_layers
 end
 
-function trainForSentence(sentence, constant_layers)
+function trainForSentence(sentence)
 
     local net = get_temporal_nn_for_srl()
     local constant_layers = get_constant_nn_after_polling()
@@ -85,10 +85,10 @@ end
 
 function main()
     doCleanup()
-    local train_data1 = sample_test_sentence(5)
-    trainForSentence(train_data1)
-    local train_data2 = sample_test_sentence(7)
-    trainForSentence(train_data2)
+    for iter = 1, 200 do
+        local train_data = sample_test_sentence(math.random(5, 12))
+        trainForSentence(train_data)
+    end
 end
 
 main()
