@@ -1,6 +1,52 @@
 import nltk
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
-
 # conll_reader = nltk.corpus.reader.conll.ConllCorpusReader()
 # conll_reader.srl_instances(root='conll2002',)
-print nltk.corpus.conll2000
+
+# conll = nltk.corpus.conll2007
+# print conll.fileids()
+#
+# WORDS = 'words'   #: column type for words
+# POS = 'pos'       #: column type for part-of-speech tags
+# TREE = 'tree'     #: column type for parse trees
+# CHUNK = 'chunk'   #: column type for chunk structures
+# NE = 'ne'         #: column type for named entities
+# SRL = 'srl'       #: column type for semantic role labels
+# IGNORE = 'ignore' #: column type for column that should be ignored
+#
+# #: A list of all column types supported by the conll corpus reader.
+# COLUMN_TYPES = (WORDS, POS, TREE, CHUNK, NE, SRL, IGNORE)
+#
+#
+# path = nltk.data.find('corpora/conll2007')
+# reader = nltk.corpus.reader.ConllChunkCorpusReader(path, conll.fileids(), COLUMN_TYPES)
+# print reader.srl_instances()
+# parser = nltk.parse.
+# sents = conll.sents()[:2]
+# for sent in sents:
+#     parser.parse(sent)
+
+
+propbank = nltk.corpus.propbank
+treebank = nltk.corpus.treebank
+file_id = 'wsj_2454.mrg'
+insts = propbank.instances()
+visited_sents = set()
+for inst in insts:
+    if (inst.fileid, inst.sentnum) not in visited_sents:
+        sent = treebank.sents(inst.fileid)[inst.sentnum]
+        print ' '.join([s.encode('utf-8') for s in sent])
+        visited_sents.add((inst.fileid, inst.sentnum))
+
+
+    # print inst.wordnum
+    # print inst.predicate
+    # print inst.roleset
+    # print inst.arguments
+# insts = insts[:1]
+# for inst in insts:
+#     print inst.fileid
+#     print inst.sentnum
+#     print inst.wordnum
+#     print inst.roleset
+#     print inst.arguments

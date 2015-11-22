@@ -53,7 +53,6 @@ function trainForSentence(sentence)
         net:add(constant_layers[i])
     end
 
-
     local train_data = {}
     train_data[1] = {sentence, 1}
     function train_data:size() return 1 end
@@ -72,8 +71,8 @@ end
 
 function sample_test_sentence(sentence_size)
     local t1 = torch.Tensor(sentence_size + 2, WORD_VEC_SIZE)
---    t1[1]:fill(0)
---    t1[sentence_size + 2]:fill(0)
+    t1[1]:fill(0)
+    t1[sentence_size + 2]:fill(0)
     return t1
 end
 
@@ -85,7 +84,7 @@ end
 
 function main()
     doCleanup()
-    for iter = 1, 200 do
+    for iter = 1, 2 do
         local train_data = sample_test_sentence(math.random(5, 12))
         trainForSentence(train_data)
     end
