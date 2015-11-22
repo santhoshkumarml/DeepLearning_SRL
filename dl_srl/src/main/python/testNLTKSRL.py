@@ -26,27 +26,22 @@ nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 # for sent in sents:
 #     parser.parse(sent)
 
+def getSentences(insts):
+    visited_sents = set()
+    for inst in insts:
+        if (inst.fileid, inst.sentnum) not in visited_sents:
+            sent = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
+            print ' '.join([s.encode('utf-8') for s in sent])
+            visited_sents.add((inst.fileid, inst.sentnum))
 
-propbank = nltk.corpus.propbank
-treebank = nltk.corpus.treebank
-file_id = 'wsj_2454.mrg'
-insts = propbank.instances()
-visited_sents = set()
-for inst in insts:
-    if (inst.fileid, inst.sentnum) not in visited_sents:
-        sent = treebank.sents(inst.fileid)[inst.sentnum]
-        print ' '.join([s.encode('utf-8') for s in sent])
-        visited_sents.add((inst.fileid, inst.sentnum))
+def getSRLInfo(inst):
+    print nltk.corpus.treebank.tagged_sents(inst.fileid)[inst.sentnum]
+    print inst.wordnum
+    print inst.predicate
+    print inst.roleset
+    print inst.arguments
 
-
-    # print inst.wordnum
-    # print inst.predicate
-    # print inst.roleset
-    # print inst.arguments
-# insts = insts[:1]
-# for inst in insts:
-#     print inst.fileid
-#     print inst.sentnum
-#     print inst.wordnum
-#     print inst.roleset
-#     print inst.arguments
+if __name__ == '__main__':
+    insts = nltk.corpus.propbank.instances()
+    inst = insts[11]
+    getSRLInfo(inst)
