@@ -34,14 +34,22 @@ def getSentences(insts):
             print ' '.join([s.encode('utf-8') for s in sent])
             visited_sents.add((inst.fileid, inst.sentnum))
 
-def getSRLInfo(inst):
-    print nltk.corpus.treebank.tagged_sents(inst.fileid)[inst.sentnum]
-    print inst.wordnum
-    print inst.predicate
-    print inst.roleset
-    print inst.arguments
+def getSRLInfo(inst, visited_dict = dict()):
+    # print nltk.corpus.treebank.tagged_sents(inst.fileid)[inst.sentnum]
+    # print inst.wordnum
+    key = (inst.fileid, inst.sentnum)
+    if key not in visited_dict:
+        visited_dict[key] = 0
+    visited_dict[key] = visited_dict[key] + 1
+    # print inst.predicate
+    # print inst.roleset
+    # print inst.arguments
 
 if __name__ == '__main__':
     insts = nltk.corpus.propbank.instances()
-    inst = insts[11]
-    getSRLInfo(inst)
+    # inst = insts[11]
+    visited_dict = dict()
+    for inst in insts:
+        getSRLInfo(inst, visited_dict)
+    for key in sorted(visited_dict.keys(), key=lambda key: visited_dict[key], reverse=True):
+        print key, visited_dict[key]

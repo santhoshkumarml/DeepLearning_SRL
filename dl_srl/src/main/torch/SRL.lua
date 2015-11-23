@@ -6,14 +6,18 @@ require 'Constants'
 require 'torch'
 require 'nn'
 
+local ksz = 3
+local convOutputFrame = 100
+local HUs = 100
+local final_output_layer_size = 2
+
 function get_temporal_nn_for_srl()
     local f = io.open(SRL_TEMPORAL_NET_FILE)
     local temporal_net = nn.Sequential()
     local temporal_convolution = {}
     if not f then
-        local ksz = 3
-        local convOutputFrame = 100
-        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE, convOutputFrame, ksz)
+        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE + SRL_OTHER_DIMENSIONS,
+            convOutputFrame, ksz)
     else
         temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
     end
@@ -26,11 +30,9 @@ function get_constant_nn_after_polling()
     local f = io.open(SRL_CONSTANT_NET_FILE)
     local constant_layers = {}
     if not f then
-        local HUs = 100
-        local outputs = 2
         local constant_layers = {}
         constant_layers[1] = nn.Tanh()
-        constant_layers[2] = nn.Linear(HUs, outputs)
+        constant_layers[2] = nn.Linear(HUs, final_output_layer_size)
         constant_layers[3] = nn.LogSoftMax()
     else
         constant_layers = torch.load(SRL_CONSTANT_NET_FILE)
@@ -44,7 +46,6 @@ function trainForSentence(sentence)
     local constant_layers = get_constant_nn_after_polling()
     local sentence_size = sentence:size(1)
 
-    local ksz = 3
     sentence_size = sentence_size - (2 * math.floor(ksz/2))
 
     net:add(nn.TemporalMaxPooling(sentence_size))
@@ -53,6 +54,7 @@ function trainForSentence(sentence)
         net:add(constant_layers[i])
     end
 
+    --TODO: put in negative sentences
     local train_data = {}
     train_data[1] = {sentence, 1}
     function train_data:size() return 1 end
@@ -64,16 +66,16 @@ function trainForSentence(sentence)
     trainer.maxIteration = 1
     trainer:train(train_data)
 
-    local temporal_net = net:get(1)
-    torch.save(SRL_TEMPORAL_NET_FILE, temporal_net)
+    local temporal_conv_net = net:get(1)
+    torch.save(SRL_TEMPORAL_NET_FILE, temporal_conv_net)
     torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
 
 function sample_test_sentence(sentence_size)
-    local t1 = torch.Tensor(sentence_size + 2, WORD_VEC_SIZE)
-    t1[1]:fill(0)
-    t1[sentence_size + 2]:fill(0)
-    return t1
+    local train_sentence = torch.Tensor(sentence_size + 2, WORD_VEC_SIZE + SRL_OTHER_DIMENSIONS)
+    train_sentence[1]:fill(0)
+    train_sentence[sentence_size + 2]:fill(0)
+    return train_sentence
 end
 
 function doCleanup()
