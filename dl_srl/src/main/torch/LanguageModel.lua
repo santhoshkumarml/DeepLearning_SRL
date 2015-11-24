@@ -31,6 +31,7 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
         else
             local word_vec = word_dict[word]
             for idx = 1, WORD_VEC_SIZE do
+                --TODO:Check this again
                 word_vec[idx] = word_vec[idx] - word_vec[idx] * netGradIp[gradIpOffset + idx]
             end
             word_dict[word] = word_vec
