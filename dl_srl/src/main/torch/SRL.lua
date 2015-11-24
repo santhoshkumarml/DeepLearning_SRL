@@ -9,6 +9,7 @@ require 'nn'
 local ksz = 3
 local convOutputFrame = 100
 local HUs = 100
+--change it to number of arguments
 local final_output_layer_size = 2
 
 function get_temporal_nn_for_srl()
@@ -40,8 +41,7 @@ function get_constant_nn_after_polling()
     return constant_layers
 end
 
-function trainForSentence(sentence)
-
+function get_nn_for_sentence(sentence)
     local net = get_temporal_nn_for_srl()
     local constant_layers = get_constant_nn_after_polling()
     local sentence_size = sentence:size(1)
@@ -53,7 +53,17 @@ function trainForSentence(sentence)
     for i = 1, #constant_layers do
         net:add(constant_layers[i])
     end
+    return net, constant_layers
+end
 
+function save_nn(net, constant_layers)
+    --Save the first module(i.e Temporal Convolution)
+    torch.save(SRL_TEMPORAL_NET_FILE, net:get(1))
+    --Save the constant layer modules
+    torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
+end
+
+function trainForSentence(sentence)
     --TODO: put in negative sentences
     local train_data = {}
     train_data[1] = {sentence, 1}
@@ -65,10 +75,6 @@ function trainForSentence(sentence)
     trainer.learningRate = 0.01
     trainer.maxIteration = 1
     trainer:train(train_data)
-
-    local temporal_conv_net = net:get(1)
-    torch.save(SRL_TEMPORAL_NET_FILE, temporal_conv_net)
-    torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
 
 function sample_test_sentence(sentence_size)
@@ -79,7 +85,7 @@ function sample_test_sentence(sentence_size)
 end
 
 function doCleanup()
-    -- remove the serialized net
+    -- remove the serialized nets
     os.remove(SRL_TEMPORAL_NET_FILE)
     os.remove(SRL_CONSTANT_NET_FILE)
 end
