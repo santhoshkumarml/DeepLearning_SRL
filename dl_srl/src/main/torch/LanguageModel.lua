@@ -13,11 +13,10 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
     local f = io.open(WORDS_FILE_PATH)
     local isUpdate = true
     local word_dict = {}
-
     if not netGradIp then
         isUpdate = false
-        word_dict[START] = torch.randn(WORD_VEC_SIZE)
-        word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
+--        word_dict[START] = torch.randn(WORD_VEC_SIZE)
+--        word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
     else
         word_dict = torch.load(DICTIONARY_FILE)
     end
@@ -28,17 +27,15 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
     -- and update the word vector by word_vec = word_vec - word_vec * (above gradWeights)
     local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
     while true do
-        local l = f:read()
-        if not l then break end
+        local word = f:read()
+        if not word then break end
         local words = {}
         table.insert(words, START)
-        word = l
-        print(word)
         table.insert(words, word)
         if not word_dict[word] then
             word_dict[word] = torch.randn(WORD_VEC_SIZE)
         else
-            word_vec = word_dict[word]
+            local word_vec = word_dict[word]
             for idx = 1, WORD_VEC_SIZE do
                 word_vec[idx] = word_vec[idx] - word_vec[idx] * netGradIp[gradIpOffset + idx]
             end
@@ -145,10 +142,11 @@ function trainAndUpdatedWordVec(epoch)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
         -- Run Batch Training and Gradient descend
     	while true do
-            batch_train_data = readBatchData(f)
+            local batch_train_data = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
 			trainer:train(batch_train_data)
         end
+        print(net.gradInput)
 
         -- Update Word Vector and the network
         initOrUpdateWordVecForWordsInDict(net.gradInput)
