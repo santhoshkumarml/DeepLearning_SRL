@@ -26,7 +26,7 @@ w2vutils.distance = function (self, vec, k)
 	return {returndistances, returnwords}
 end
 
-w2vutils.word2vec = function (self,word,throwerror)
+w2vutils.word2vec = function (self, word, throwerror)
 	local throwerror = throwerror or false
 	local ind = self.w2vvocab[word]
 	if throwerror then
