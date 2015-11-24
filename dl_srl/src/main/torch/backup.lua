@@ -1,9 +1,9 @@
 require 'torch';
 require 'nn';
 
-FILE_PATH = "../resources/diction.txt"
-WORD_VEC_SIZE = 25
-DICTIONARY_FILE = "../resources/dictionary.dict"
+local FILE_PATH = "../resources/diction.txt"
+local WORD_VEC_SIZE = 25
+local DICTIONARY_FILE = "../resources/dictionary.dict"
 
 
 -- read and Store Data

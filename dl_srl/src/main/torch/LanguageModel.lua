@@ -11,16 +11,10 @@ require 'Constants';
 -- create/update and store word vectors for dictionary.
 function initOrUpdateWordVecForWordsInDict(netGradIp)
     local f = io.open(WORDS_FILE_PATH)
-    local isUpdate = true
     local word_dict = {}
-    if not netGradIp then
-        isUpdate = false
---        word_dict[START] = torch.randn(WORD_VEC_SIZE)
---        word_dict[FINISH] = torch.randn(WORD_VEC_SIZE)
-    else
+    if netGradIp then
         word_dict = torch.load(DICTIONARY_FILE)
     end
-
     -- netGradIp will be WORD_VEC_SIZE * WINDOWS_SIZE
     -- To update a single word we will need to just pick the gradient of weights For Middle word
     -- (i.e ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) to ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) + WORD_VECSIZE)
@@ -146,7 +140,6 @@ function trainAndUpdatedWordVec(epoch)
 	    	if batch_train_data:size() == 0 then break end
 			trainer:train(batch_train_data)
         end
-        print(net.gradInput)
 
         -- Update Word Vector and the network
         initOrUpdateWordVecForWordsInDict(net.gradInput)
