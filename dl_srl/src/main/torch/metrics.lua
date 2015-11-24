@@ -86,16 +86,18 @@ function findTopKNeighbors(k)
 end
 
 --ds = m.distances(dataset) -- return the matrix of distances (L2)
-local dataset, idx_words = formData()
-ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
+function tryDistanceMetric()
+    local dataset, idx_words = formData()
+    ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
 
-for i = 1, 143 do
-    word = idx_words[i]
-    if word == 'when' then
-        print(word)
-        for j = 1, 10 do
-            idx = ns[i][j]
-            print(idx, idx_words[idx])
+    for i = 1, 143 do
+        word = idx_words[i]
+        if word == 'when' then
+            print(word)
+            for j = 1, 10 do
+                idx = ns[i][j]
+                print(idx, idx_words[idx])
+            end
         end
     end
 end
@@ -106,4 +108,9 @@ end
 --p = m.embedding.lle(t, {dim=2, neighbors=3})  -- embed samples into a 2D plane, using 3 neighbor (LLE)
 
 --p = m.embedding.tsne(dataset, {dim=2, perplexity=30})  -- embed samples into a 2D plane, using tSNE
+
+local w2vutils = require 'w2vutils'
+local k = 3
+hellorep = w2vutils:word2vec('Hello')
+neighbors = w2vutils:distance(hellorep, k)
 
