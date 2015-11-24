@@ -6,7 +6,7 @@ local max_w = 50
 
 function readStringv2(file)  
 	local str = {}
-	for i = 1,max_w do
+	for i = 1, max_w do
 		local char = file:readChar()
 		
 		if char == 32 or char == 10 or char == 0 then
