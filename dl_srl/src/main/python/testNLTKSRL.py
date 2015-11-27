@@ -34,22 +34,28 @@ def getSentences(insts):
             print ' '.join([s.encode('utf-8') for s in sent])
             visited_sents.add((inst.fileid, inst.sentnum))
 
-def getSRLInfo(inst, visited_dict = dict()):
+def getSRLInfo(inst, visited_dict = dict(), roles = set()):
     # print nltk.corpus.treebank.tagged_sents(inst.fileid)[inst.sentnum]
     # print inst.wordnum
-    key = (inst.fileid, inst.sentnum)
-    if key not in visited_dict:
-        visited_dict[key] = 0
-    visited_dict[key] = visited_dict[key] + 1
+    sent_key = (inst.fileid, inst.sentnum)
+    # if sent_key not in visited_dict:
+    #     visited_dict[sent_key] = 0
+    # visited_dict[sent_key] = visited_dict[sent_key] + 1
+    for arg in inst.arguments:
+        loc, arg = arg
+        roles.add(arg)
     # print inst.predicate
     # print inst.roleset
     # print inst.arguments
+    return sent_key
 
 if __name__ == '__main__':
-    insts = nltk.corpus.propbank.instances()
-    # inst = insts[11]
+    insts = nltk.corpus.propbank.instances()[:20]
     visited_dict = dict()
+    roles = set()
     for inst in insts:
-        getSRLInfo(inst, visited_dict)
-    for key in sorted(visited_dict.keys(), key=lambda key: visited_dict[key], reverse=True):
-        print key, visited_dict[key]
+        fileid, sentnum = getSRLInfo(inst, visited_dict, roles)
+        print nltk.corpus.treebank.parsed_sents(fileid)[sentnum]
+    print roles, len(roles)
+    # for key in sorted(visited_dict.keys(), key=lambda key: visited_dict[key], reverse=True):
+    #     print key, visited_dict[key]

@@ -17,7 +17,8 @@ function get_temporal_nn_for_srl()
     local temporal_net = nn.Sequential()
     local temporal_convolution = {}
     if not f then
-        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE + SRL_OTHER_DIMENSIONS,
+        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE
+                + SRL_WORD_INTEREST_DIM + SRL_VERB_DIST_DIM,
             convOutputFrame, ksz)
     else
         temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
@@ -78,7 +79,8 @@ function trainForSentence(sentence)
 end
 
 function sample_test_sentence(sentence_size)
-    local train_sentence = torch.Tensor(sentence_size + 2, WORD_VEC_SIZE + SRL_OTHER_DIMENSIONS)
+    local train_sentence = torch.Tensor(sentence_size + 2, WORD_VEC_SIZE
+            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
     train_sentence[1]:fill(0)
     train_sentence[sentence_size + 2]:fill(0)
     return train_sentence
