@@ -64,12 +64,7 @@ function save_nn(net, constant_layers)
     torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
 
-function trainForSentence(sentence)
-    --TODO: put in negative sentences
-    local train_data = {}
-    train_data[1] = {sentence, 1}
-    function train_data:size() return 1 end
-
+function trainForSingleInstance(sentence)
     -- Define Loss Function
     local criterion = nn.ClassNLLCriterion()
     local trainer = nn.StochasticGradient(net, criterion)
@@ -92,10 +87,30 @@ function doCleanup()
     os.remove(SRL_CONSTANT_NET_FILE)
 end
 
+function makeArgToClassDict()
+    local f = io.open(ARG_FILE)
+    local args = string.split(f:read(), ",")
+    local args_ds = {}
+    local idx_to_arg_dict = {}
+    local arg_to_idx_dict = {}
+    for idx = 1, #args do
+        idx_to_arg_dict[idx] = args[idx]
+        arg_to_idx_dict[args[idx]] = idx
+    end
+    args_ds = {arg_to_idx_dict, arg_to_idx_dict}
+    torch.save(ARGS_DICT_FILE, args_ds)
+end
+
 function main()
     doCleanup()
+    makeArgToClassDict()
     for iter = 1, 2 do
-        local train_data = sample_test_sentence(math.random(5, 12))
+        --TODO: put in multi class sentences.
+        local train_sentence = sample_test_sentence(math.random(5, 12))
+        local train_data = {}
+        train_data[1] = {train_sentence, 1}
+        function train_data:size() return 1 end
+
         trainForSentence(train_data)
     end
 end

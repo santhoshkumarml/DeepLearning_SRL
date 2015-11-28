@@ -42,3 +42,6 @@ START = "$START$"
 
 FINISH = "$END$"
 
+ARG_FILE = '../resources/args.txt'
+ARG_DICT_FILE = '../resources/args.t7'
+
