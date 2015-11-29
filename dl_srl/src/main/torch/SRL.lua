@@ -14,6 +14,10 @@ local HUs = 100
 --Later loaded to number of argument classes
 local final_output_layer_size = -1
 
+local total_data_size = 112917
+local train_data_size = math.floor(0.7 * total_data_size)
+local test_data_size = total_data_size - train_data_size
+
 
 function sample_test_sentence(sentence_size)
     local train_sentence = torch.Tensor(sentence_size, WORD_VEC_SIZE
@@ -124,13 +128,13 @@ function trainForSingleInstance(sentence)
 end
 
 --Train for sentences
-function train()
+function train(epoch)
+    print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_to_class_dict, class_to_arg_dict = torch.load(ARGS_DICT_FILE)
-    local no_train_sentences = 70000
     local f = io.open(SRL_TRAIN_FILE)
 
-    for iter = 1, no_train_sentences do
+    for iter = 1, train_data_size do
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
@@ -160,6 +164,7 @@ function train()
             trainForSingleInstance(train_data)
         end
     end
+    print('------------------------------------------------------------------------------------------')
 end
 
 
@@ -174,7 +179,9 @@ function main()
     doCleanup()
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
-    train()
+    for epoch = 1, EPOCH do
+        train(epoch)
+    end
 end
 
 

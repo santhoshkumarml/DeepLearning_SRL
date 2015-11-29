@@ -2,6 +2,8 @@ import nltk
 
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 
+def getCoarseGrainedArg(arg):
+    pass
 
 def getPropBankTreePointers(loc):
     if isinstance(loc, nltk.corpus.reader.propbank.PropbankTreePointer):
@@ -46,7 +48,7 @@ def getSRLInfo(inst, sent, visited_dict = dict(), roles = set()):
             leaf_positions = getTreeLeafPos(tpos, tree)
             sent_word_idxs = sorted([all_leaves_positions[leaf_pos] for leaf_pos in leaf_positions])
             for idx in sent_word_idxs:
-                sent_widx_to_arg_dict[idx] = arg
+                sent_widx_to_arg_dict[idx] = getCoarseGrainedArg(arg)
         roles.add(arg)
 
     #Predicate

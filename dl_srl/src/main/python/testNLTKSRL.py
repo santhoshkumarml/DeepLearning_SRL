@@ -59,37 +59,11 @@ def findSubarrayIdx(array, subarray):
     return start_idx, end_idx
 
 
-def getTreeLeafPos(tpos, tree):
-    all_leaf_pos = []
-    stack = list()
-    visited_pos = set()
-    stack.append((tpos, tree[tpos]))
-    while len(stack) > 0:
-        i, node = stack.pop()
-        visited_pos.add(i)
-        if isinstance(node, nltk.tree.Tree):
-            childpos = [tuple(list(i)+list(p)) for p in node.treepositions()
-                        if tuple(list(i)+list(p)) not in visited_pos]
-            for pos in childpos:
-                stack.append((pos, tree[pos]))
-        else:
-            all_leaf_pos.append(i)
-    return all_leaf_pos
-
 if __name__ == '__main__':
-    insts = nltk.corpus.propbank.instances()[112913:112914]
-    for inst in insts:
-        sent = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
-        print sent
-        tree = inst.tree
-        all_leaves_positions = {tree.leaf_treeposition(i): i for i in range(len(tree.leaves()))}
-        for locArg in inst.arguments:
-            print '---------------------------------------------------------'
-            loc, arg = locArg
-            for propBankPtr in preprocess_srl.getPropBankTreePointers(loc):
-                tpos = propBankPtr.treepos(tree)
-                leaf_positions = getTreeLeafPos(tpos, tree)
-                sent_word_idxs = sorted([all_leaves_positions[leaf_pos] for leaf_pos in leaf_positions])
-                print [sent[idx] for idx in sent_word_idxs]
-            print '---------------------------------------------------------'
+    insts = nltk.corpus.propbank.instances()
+    roles = set()
+    print len(insts)
+    roles = set([arg for inst in insts for loc, arg in inst.arguments])
+    print roles
+
 
