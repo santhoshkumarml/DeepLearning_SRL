@@ -78,9 +78,9 @@ function save_nn(net)
     torch.save(SRL_TEMPORAL_NET_FILE, net:get(1))
     local constant_layers = {}
     for i = 3, net:size() do
+        print(constant_layers, net:get(i))
         constant_layers[i-3] = net:get(i)
     end
-    print(constant_layers)
     --Save the constant layer modules
     torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
@@ -176,6 +176,7 @@ function train(epoch)
             train_data[1] = {feature_vecs_for_sent, curr_target}
             function train_data:size() return 1 end
             trainForSingleInstance(train_data)
+            os.exit()
         end
     end
     print('------------------------------------------------------------------------------------------')
