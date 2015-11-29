@@ -143,7 +143,7 @@ function train(epoch)
 
         for widx1 = 1, #words do
             local word_of_interest, current_arg = words[widx1], args[widx1]
-            for widx2 = 1, #wordsAndArgs do
+            for widx2 = 1, #words do
                 local curr_word = words[widx2]
                 local feature_vec_for_word = w2vutils:word2vec(curr_word)
                 feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
