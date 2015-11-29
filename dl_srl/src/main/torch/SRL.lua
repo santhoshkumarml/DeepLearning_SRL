@@ -14,6 +14,14 @@ local HUs = 100
 --Later loaded to number of argument classes
 local final_output_layer_size = -1
 
+
+function sample_test_sentence(sentence_size)
+    local train_sentence = torch.Tensor(sentence_size, WORD_VEC_SIZE
+            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
+    return train_sentence
+end
+
+
 --Load the Temporal Convolution layer for the neural network
 function get_temporal_nn_for_srl()
     local f = io.open(SRL_TEMPORAL_NET_FILE)
@@ -70,17 +78,6 @@ function save_nn(net, constant_layers)
 end
 
 
---Train on an instance of sentences with a specific word of interest.
-function trainForSingleInstance(sentence)
-    local net = get_nn_for_sentence(sentence)
-    local criterion = nn.ClassNLLCriterion()
-    local trainer = nn.StochasticGradient(net, criterion)
-    trainer.learningRate = 0.01
-    trainer.maxIteration = 1
-    trainer:train(train_data)
-    save_nn(net)
-end
-
 --Encode the number in 5 dimenion space
 --Also the number is restrained to stick to [-15, 15] if it is not
 function intToBin(num)
@@ -100,12 +97,6 @@ function intToBin(num)
     return tensor
 end
 
--- Remove the serialized nets
-function doCleanup()
-    os.remove(SRL_TEMPORAL_NET_FILE)
-    os.remove(SRL_CONSTANT_NET_FILE)
-end
-
 
 --Read Arguments dictionary and generate class number for them starting with 1
 function makeArgToClassDict()
@@ -120,11 +111,20 @@ function makeArgToClassDict()
     return #args
 end
 
---Main Function
-function main()
-    doCleanup()
-    --Number of different argument classes
-    final_output_layer_size = makeArgToClassDict()
+
+--Train on an instance of sentences with a specific word of interest.
+function trainForSingleInstance(sentence)
+    local net = get_nn_for_sentence(sentence)
+    local criterion = nn.ClassNLLCriterion()
+    local trainer = nn.StochasticGradient(net, criterion)
+    trainer.learningRate = 0.01
+    trainer.maxIteration = 1
+    trainer:train(train_data)
+    save_nn(net)
+end
+
+--Train for sentences
+function train()
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_to_class_dict, class_to_arg_dict = torch.load(ARGS_DICT_FILE)
 
@@ -163,10 +163,18 @@ function main()
 end
 
 
-function sample_test_sentence(sentence_size)
-    local train_sentence = torch.Tensor(sentence_size, WORD_VEC_SIZE
-            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
-    return train_sentence
+-- Remove the serialized nets
+function doCleanup()
+    os.remove(SRL_TEMPORAL_NET_FILE)
+    os.remove(SRL_CONSTANT_NET_FILE)
+end
+
+--Main Function
+function main()
+    doCleanup()
+    --Number of different argument classes
+    final_output_layer_size = makeArgToClassDict()
+    train()
 end
 
 
