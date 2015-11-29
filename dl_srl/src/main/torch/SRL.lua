@@ -13,6 +13,7 @@ local convOutputFrame = 100
 local HUs = 100
 --Later loaded to number of argument classes
 local final_output_layer_size = -1
+local UNK = torch.randn(WORD_VEC_SIZE + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
 
 local total_data_size = 112917
 local train_data_size = math.floor(0.7 * total_data_size)
@@ -157,7 +158,7 @@ function train(epoch)
                 local curr_word = words[widx2]
                 local feature_vec_for_word = w2vutils:word2vec(curr_word)
                 if not feature_vec_for_word then
-                    feature_vec_for_word = torch.Tensor(WORD_VEC_SIZE):fill(0)
+                    feature_vec_for_word = UNK
                     print('Word Vec not known for', curr_word)
                 else
                     feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
