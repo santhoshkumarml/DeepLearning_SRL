@@ -1,6 +1,7 @@
 import nltk
 import preprocess
 import os
+import preprocess_srl
 
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 # conll_reader = nltk.corpus.reader.conll.ConllCorpusReader()
@@ -58,75 +59,37 @@ def findSubarrayIdx(array, subarray):
     return start_idx, end_idx
 
 
-def getPropBankTreePointers(loc):
-    if isinstance(loc, nltk.corpus.reader.propbank.PropbankTreePointer):
-        return [loc]
-    elif isinstance(loc, nltk.corpus.reader.propbank.PropbankChainTreePointer) or\
-            isinstance(loc, nltk.corpus.reader.propbank.PropbankSplitTreePointer):
-        locs = loc.pieces
-        all_locs = []
-        for loc in locs:
-            all_locs.extend(getPropBankTreePointers(loc))
-        return all_locs
-
-def getTreePosLeaves(loc, tree):
-    treepos = loc.treepos(tree)
-    return treepos, [tree.leaf_treeposition()]
-
-
-def getSRLInfo(insts, idx, visited_dict = dict(), roles = set()):
-    # print nltk.corpus.treebank.tagged_sents(inst.fileid)[inst.sentnum]
-    # print inst.wordnum
-    inst = insts[idx]
-    sent_key = (inst.fileid, inst.sentnum)
-    tree = inst.tree
-    sent_widx_to_arg_dict = dict()
-    # if sent_key not in visited_dict:
-    #     visited_dict[sent_key] = 0
-    # visited_dict[sent_key] = visited_dict[sent_key] + 1
-    sent_array = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
-    inst.tree.pretty_print(unicodelines=True, nodedist=4)
-    # sent_subarray = loc.select(tree).leaves()
-    # s, e = findSubarrayIdx(sent_array, sent_subarray)
-    # print s, e, sent_subarray, arg
-    print '------------------------------INST', idx, '-', sent_key, '-----------------------------------------'
-    for arg in inst.arguments:
-        loc, arg = arg
-        for pos in getPropBankTreePointers(loc):
-            sent_subarray = getTreePosLeaves(pos, tree)
-            print sent_subarray
-            # # s, e = findSubarrayIdx(sent_array, sent_subarray)
-            # for i in range(s, e):
-            #     sent_widx_to_arg_dict[i] = arg
-        roles.add(arg)
-
-    loc = inst.predicate
-    for pos in getPropBankTreePointers(loc):
-        sent_subarray = getTreePosLeaves(pos, tree)
-        print sent_subarray
-        # s, e = findSubarrayIdx(sent_array, sent_subarray)
-        # for i in range(s, e):
-        #     sent_widx_to_arg_dict[i] = 'PREDICATE'
-
-    # for i in range(0, len(sent_array)):
-    #     if i not in sent_widx_to_arg_dict:
-    #         sent_widx_to_arg_dict[i] = 'NULL'
-
-    for key in sorted(sent_widx_to_arg_dict.keys()):
-        print key, sent_widx_to_arg_dict[key]
-
-    print '-----------------------------------------------------------------------'
-
-    return sent_key
-
+def getTreeLeafPos(tpos, tree):
+    all_leaf_pos = []
+    stack = list()
+    visited_pos = set()
+    stack.append((tpos, tree[tpos]))
+    while len(stack) > 0:
+        i, node = stack.pop()
+        visited_pos.add(i)
+        if isinstance(node, nltk.tree.Tree):
+            childpos = [tuple(list(i)+list(p)) for p in node.treepositions()
+                        if tuple(list(i)+list(p)) not in visited_pos]
+            for pos in childpos:
+                stack.append((pos, tree[pos]))
+        else:
+            all_leaf_pos.append(i)
+    return all_leaf_pos
 
 if __name__ == '__main__':
     insts = nltk.corpus.propbank.instances()[112913:112914]
-    visited_dict = dict()
-    roles = set()
-    for i in range(len(insts)):
-        fileid, sentnum = getSRLInfo(insts, i, visited_dict, roles)
-    #
-    # print roles, len(roles)
-    # for key in sorted(visited_dict.keys(), key=lambda key: visited_dict[key], reverse=True):
-    #     print key, visited_dict[key]
+    for inst in insts:
+        sent = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
+        print sent
+        tree = inst.tree
+        all_leaves_positions = {tree.leaf_treeposition(i): i for i in range(len(tree.leaves()))}
+        for locArg in inst.arguments:
+            print '---------------------------------------------------------'
+            loc, arg = locArg
+            for propBankPtr in preprocess_srl.getPropBankTreePointers(loc):
+                tpos = propBankPtr.treepos(tree)
+                leaf_positions = getTreeLeafPos(tpos, tree)
+                sent_word_idxs = sorted([all_leaves_positions[leaf_pos] for leaf_pos in leaf_positions])
+                print [sent[idx] for idx in sent_word_idxs]
+            print '---------------------------------------------------------'
+
