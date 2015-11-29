@@ -53,7 +53,7 @@ def findSubarrayIdx(array, subarray):
 
 
 if __name__ == '__main__':
-  insts = nltk.corpus.propbank.instances()[:1]
+  insts = nltk.corpus.propbank.instances()
   preprocess_srl.printSRLRoles(insts)
-  preprocess_srl.printSRLInfo(insts)
+  # preprocess_srl.printSRLInfo(insts)
 

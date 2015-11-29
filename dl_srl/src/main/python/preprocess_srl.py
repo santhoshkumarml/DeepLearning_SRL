@@ -5,6 +5,26 @@ import Constants
 nltk.data.path.append(Constants.NLTK_DATA_PATH)
 
 def getCoarseGrainedArg(arg):
+    ARG0, ARG1, ARG2, ARG3, ARG4, ARG5  = u'ARG0', u'ARG1', u'ARG2', u'ARG3', u'ARG4', u'ARG5'
+    ARGMs = {
+        u'ARGM-for', u'ARGM-at', u'ARGM-MOD', u'ARGM-with',
+        u'ARGM-against', u'ARGM-by', u'ARGM-in', u'ARGM-on'}
+
+    if arg.startswith(ARG0):
+        return ARG0
+    elif arg.startswith(ARG1):
+        return ARG1
+    elif arg.startswith(ARG2):
+        return ARG2
+    elif arg.startswith(ARG3):
+        return ARG3
+    elif arg.startswith(ARG4):
+        return ARG4
+    elif arg.startswith(ARG5):
+        return ARG5
+    elif arg in ARGMs:
+        return u'ARGM-PREP'
+
     return arg
 
 def getPropBankTreePointers(loc):
