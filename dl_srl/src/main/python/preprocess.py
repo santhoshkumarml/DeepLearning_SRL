@@ -1,20 +1,14 @@
-import nltk
-import os
 import random
 from collections import deque
 
-nltk.data.path.append('/home/sriganesh/nltk_data')
-rsrc_path = os.path.join('/home/sriganesh/Documents/CompLing/DeepLearning_SRL/dl_srl', 'src/main/resources')
-data_file_path = os.path.join(rsrc_path, 'small_wikipedia2text-extracted.txt')
-op_data_file_path = os.path.join(rsrc_path, 'data.txt')
-train_file_path = os.path.join(rsrc_path, 'train_data.txt')
-diction_file_path = os.path.join(rsrc_path, 'diction.txt')
-WINDOW_SIZE = 11
-MID = WINDOW_SIZE/2
+import nltk
 
-START = '$START$'
-END = '$END$'
-UNK = 'UNK'
+from Constants import data_file_path,\
+    op_data_file_path,\
+    train_file_path,\
+    diction_file_path, WINDOW_SIZE, MID, START, \
+    END, UNK
+
 
 #number of lines processed locally = 128170:The Tang capital of Chang'an ( today 's Xi'an ) became an important center for Buddhist thought .
 
@@ -29,8 +23,8 @@ def makeWindowAndTrainingData(diction):
                 pos_window_words = deque(words[0 : WINDOW_SIZE])
                 count = 0
                 for idx in range(WINDOW_SIZE, len(words)):
-                    new_word = words[MID+count]
-                    main_word = words[MID+count]
+                    new_word = words[MID + count]
+                    main_word = words[MID + count]
 
                     while new_word == main_word:
                         new_word = random.choice(tuple(diction))
@@ -43,7 +37,7 @@ def makeWindowAndTrainingData(diction):
                     pos_window_words.popleft()
                     pos_window_words.append(words[idx])
                     count += 1
-                
+
 def tokenizeAndFormDict():
     sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
     diction = set()

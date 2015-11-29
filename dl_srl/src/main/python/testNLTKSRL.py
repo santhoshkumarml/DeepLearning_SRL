@@ -1,9 +1,8 @@
 import nltk
-import preprocess
-import os
+import Constants
 import preprocess_srl
 
-nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
+nltk.data.path.append(Constants.NLTK_DATA_PATH)
 # conll_reader = nltk.corpus.reader.conll.ConllCorpusReader()
 # conll_reader.srl_instances(root='conll2002',)
 
@@ -29,12 +28,6 @@ nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 # sents = conll.sents()[:2]
 # for sent in sents:
 #     parser.parse(sent)
-
-ARGS_DICT_FILE_NAME = 'args.txt'
-SRL_TRAIN_FILE_NAME = 'SRL_train.txt'
-SRL_TRAIN_FILE = os.path.join(preprocess.rsrc_path, SRL_TRAIN_FILE_NAME)
-ARGS_DICT_FILE = os.path.join(preprocess.rsrc_path, ARGS_DICT_FILE_NAME)
-
 def getSentences(insts):
     visited_sents = set()
     for inst in insts:
@@ -60,10 +53,7 @@ def findSubarrayIdx(array, subarray):
 
 
 if __name__ == '__main__':
-    insts = nltk.corpus.propbank.instances()
-    roles = set()
-    print len(insts)
-    roles = set([arg for inst in insts for loc, arg in inst.arguments])
-    print roles
-
+  insts = nltk.corpus.propbank.instances()[:1]
+  preprocess_srl.printSRLRoles(insts)
+  preprocess_srl.printSRLInfo(insts)
 
