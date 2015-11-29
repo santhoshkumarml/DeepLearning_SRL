@@ -138,7 +138,7 @@ function train(epoch)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        local feature_vecs_for_sent = torch.Tensor(#wordsAndArgs, WORD_VEC_SIZE
+        local feature_vecs_for_sent = torch.Tensor(#words, WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
 
         for widx1 = 1, #words do
