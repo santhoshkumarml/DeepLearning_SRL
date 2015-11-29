@@ -77,10 +77,12 @@ function save_nn(net)
     --Save the first module(i.e Temporal Convolution)
     torch.save(SRL_TEMPORAL_NET_FILE, net:get(1))
     local constant_layers = {}
+    print(net:size())
     for i = 3, net:size() do
-        print(constant_layers, net:get(i))
+        print(constant_layers)
         constant_layers[i-2] = net:get(i)
     end
+    print('After', constant_layers)
     --Save the constant layer modules
     torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
