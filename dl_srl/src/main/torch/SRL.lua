@@ -127,20 +127,20 @@ end
 function train()
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_to_class_dict, class_to_arg_dict = torch.load(ARGS_DICT_FILE)
+    local no_train_sentences = 70000
+    local f = io.open(SRL_TRAIN_FILE)
 
-    --TODO: read this from file
-    local sentences = {}
-    for iter = 1, #sentences do
-        local sentence = sentences[iter]
-        local wordsAndArgs = string.split(sentence, " ")
+    for iter = 1, no_train_sentences do
+        local predicate_idx = tonumber(f:read())
+        local words = string.split(f:read(), " ")
+        local args = string.split(f:read(), " ")
         local feature_vecs_for_sent = torch.Tensor(#wordsAndArgs, WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
-        --TODO: Fill this from the file the first line is predicate index
-        local predicate_idx = -1
-        for widx1 = 1, #wordsAndArgs do
-            local word_of_interest, current_arg = string.split(wordsAndArgs[widx1], ",")
+
+        for widx1 = 1, #words do
+            local word_of_interest, current_arg = words[widx1], args[widx1]
             for widx2 = 1, #wordsAndArgs do
-                local curr_word, arg = string.split(wordsAndArgs[widx2], ",")
+                local curr_word = words[widx2]
                 local feature_vec_for_word = w2vutils:word2vec(curr_word)
                 feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
 

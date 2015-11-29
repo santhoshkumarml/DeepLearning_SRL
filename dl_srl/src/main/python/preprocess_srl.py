@@ -72,10 +72,11 @@ def getSRLInfo(inst, sent, visited_dict = dict(), roles = set()):
 
 
 if __name__ == '__main__':
-    insts = nltk.corpus.propbank.instances()[112913:112915]
+    insts = nltk.corpus.propbank.instances()[:1]
     roles = set()
     for inst in insts:
         sent = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
         predicate_idx, sent_widx_to_arg_dict = getSRLInfo(inst, sent, roles=roles)
-        print predicate_idx, sent[predicate_idx]
-        print " ".join([ (sent[idx],sent_widx_to_arg_dict[idx]) for idx in range(len(sent))])
+        print predicate_idx + 1
+        print " ".join([sent[idx] for idx in range(len(sent))])
+        print " ".join([sent_widx_to_arg_dict[idx] for idx in range(len(sent))])
