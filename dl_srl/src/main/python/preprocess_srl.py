@@ -5,7 +5,7 @@ import Constants
 nltk.data.path.append(Constants.NLTK_DATA_PATH)
 
 def getCoarseGrainedArg(arg):
-    pass
+    return arg
 
 def getPropBankTreePointers(loc):
     if isinstance(loc, nltk.corpus.reader.propbank.PropbankTreePointer):
@@ -76,6 +76,8 @@ def getSRLInfo(inst, sent):
 def printSRLRoles(insts):
     all_roles = set([arg for inst in insts for loc, arg in inst.arguments])
     roles = set([getCoarseGrainedArg(role) for role in all_roles])
+    roles.add('VERB')
+    roles.add('NULL')
     output = ','.join([role for role in roles])
     with open(Constants.ARGS_DICT_FILE, 'w') as f:
         f.write(output)
@@ -88,5 +90,6 @@ def printSRLInfo(insts):
             f.write(str(predicate_idx + 1) + '\n')
             output1 = ' '.join([sent[idx] for idx in range(len(sent))])
             f.write(output1 + '\n')
-            output2 = ' '.join([sent_widx_to_arg_dict[idx] for idx in range(len(sent))])
+            output2 = [sent_widx_to_arg_dict[idx] for idx in range(len(sent))]
+            output2 = ' '.join(output2)
             f.write(output2 + '\n')
