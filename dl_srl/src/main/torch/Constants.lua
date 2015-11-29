@@ -45,3 +45,5 @@ FINISH = "$END$"
 ARG_FILE = '../resources/args.txt'
 ARG_DICT_FILE = '../resources/args.t7'
 
+SRL_TRAIN_FILE = '../resources/SRL_train.txt'
+

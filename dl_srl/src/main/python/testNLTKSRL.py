@@ -1,5 +1,7 @@
 import nltk
-import collections
+import preprocess
+import os
+
 nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 # conll_reader = nltk.corpus.reader.conll.ConllCorpusReader()
 # conll_reader.srl_instances(root='conll2002',)
@@ -26,6 +28,11 @@ nltk.data.path.append('/media/santhosh/Data/workspace/nltk_data/')
 # sents = conll.sents()[:2]
 # for sent in sents:
 #     parser.parse(sent)
+
+ARGS_DICT_FILE_NAME = 'args.txt'
+SRL_TRAIN_FILE_NAME = 'SRL_train.txt'
+SRL_TRAIN_FILE = os.path.join(preprocess.rsrc_path, SRL_TRAIN_FILE_NAME)
+ARGS_DICT_FILE = os.path.join(preprocess.rsrc_path, ARGS_DICT_FILE_NAME)
 
 def getSentences(insts):
     visited_sents = set()
@@ -64,7 +71,7 @@ def getPropBankTreePointers(loc):
 
 def getTreePosLeaves(loc, tree):
     treepos = loc.treepos(tree)
-    return tree[treepos].leaves()
+    return treepos, [tree.leaf_treeposition()]
 
 
 def getSRLInfo(insts, idx, visited_dict = dict(), roles = set()):
@@ -78,29 +85,32 @@ def getSRLInfo(insts, idx, visited_dict = dict(), roles = set()):
     #     visited_dict[sent_key] = 0
     # visited_dict[sent_key] = visited_dict[sent_key] + 1
     sent_array = nltk.corpus.treebank.sents(inst.fileid)[inst.sentnum]
+    inst.tree.pretty_print(unicodelines=True, nodedist=4)
     # sent_subarray = loc.select(tree).leaves()
     # s, e = findSubarrayIdx(sent_array, sent_subarray)
     # print s, e, sent_subarray, arg
-    print '------------------------------INST', idx, '-----------------------------------------'
+    print '------------------------------INST', idx, '-', sent_key, '-----------------------------------------'
     for arg in inst.arguments:
         loc, arg = arg
         for pos in getPropBankTreePointers(loc):
             sent_subarray = getTreePosLeaves(pos, tree)
-            s, e = findSubarrayIdx(sent_array, sent_subarray)
-            for i in range(s, e):
-                sent_widx_to_arg_dict[i] = arg
+            print sent_subarray
+            # # s, e = findSubarrayIdx(sent_array, sent_subarray)
+            # for i in range(s, e):
+            #     sent_widx_to_arg_dict[i] = arg
         roles.add(arg)
 
     loc = inst.predicate
     for pos in getPropBankTreePointers(loc):
         sent_subarray = getTreePosLeaves(pos, tree)
-        s, e = findSubarrayIdx(sent_array, sent_subarray)
-        for i in range(s, e):
-            sent_widx_to_arg_dict[i] = 'PREDICATE'
+        print sent_subarray
+        # s, e = findSubarrayIdx(sent_array, sent_subarray)
+        # for i in range(s, e):
+        #     sent_widx_to_arg_dict[i] = 'PREDICATE'
 
-    for i in range(0, len(sent_array)):
-        if i not in sent_widx_to_arg_dict:
-            sent_widx_to_arg_dict[i] = 'NULL'
+    # for i in range(0, len(sent_array)):
+    #     if i not in sent_widx_to_arg_dict:
+    #         sent_widx_to_arg_dict[i] = 'NULL'
 
     for key in sorted(sent_widx_to_arg_dict.keys()):
         print key, sent_widx_to_arg_dict[key]
@@ -111,12 +121,12 @@ def getSRLInfo(insts, idx, visited_dict = dict(), roles = set()):
 
 
 if __name__ == '__main__':
-    insts = nltk.corpus.propbank.instances()
+    insts = nltk.corpus.propbank.instances()[112913:112914]
     visited_dict = dict()
     roles = set()
     for i in range(len(insts)):
         fileid, sentnum = getSRLInfo(insts, i, visited_dict, roles)
-
-    print roles, len(roles)
+    #
+    # print roles, len(roles)
     # for key in sorted(visited_dict.keys(), key=lambda key: visited_dict[key], reverse=True):
     #     print key, visited_dict[key]
