@@ -121,7 +121,7 @@ end
 
 --Train on an instance of sentences with a specific word of interest.
 function trainForSingleInstance(train_data)
-    local sentence = train_data[1]
+    local sentence = train_data[1][1]
     local net = get_nn_for_sentence(sentence)
     local criterion = nn.ClassNLLCriterion()
     local trainer = nn.StochasticGradient(net, criterion)
