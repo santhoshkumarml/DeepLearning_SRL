@@ -179,7 +179,6 @@ function train(epoch)
             function train_data:size() return 1 end
             trainForSingleInstance(train_data)
         end
-        os.exit()
     end
     f:close()
     print('------------------------------------------------------------------------------------------')
