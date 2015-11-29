@@ -18,7 +18,6 @@ local total_data_size = 112917
 local train_data_size = math.floor(0.7 * total_data_size)
 local test_data_size = total_data_size - train_data_size
 
-
 function sample_test_sentence(sentence_size)
     local train_sentence = torch.Tensor(sentence_size, WORD_VEC_SIZE
             + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
@@ -149,8 +148,8 @@ function train(epoch)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        local feature_vecs_for_sent = torch.Tensor(#words, WORD_VEC_SIZE
-                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
+        local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
+                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
         print('Processing the sentence', iter)
         for widx1 = 1, #words do
             local word_of_interest, current_arg = words[widx1], args[widx1]
@@ -170,7 +169,7 @@ function train(epoch)
                 feature_vec_for_word = torch.cat(
                     torch.cat(feature_vec_for_word, distance_to_word_of_interest),
                     distance_to_predicate)
-                feature_vecs_for_sent[widx2] = feature_vec_for_word
+                feature_vecs_for_sent[widx2 + 1] = feature_vec_for_word
             end
 
             local curr_target = arg_to_class_dict[current_arg]
