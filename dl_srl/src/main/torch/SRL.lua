@@ -146,7 +146,13 @@ function train(epoch)
             for widx2 = 1, #words do
                 local curr_word = words[widx2]
                 local feature_vec_for_word = w2vutils:word2vec(curr_word)
-                feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+
+                if not feature_vec_for_word then
+                    feature_vec_for_word = torch.Tensor(WORD_VEC_SIZE):fill(0)
+                else
+                    feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+                    print('Word Vec not known for', curr_word)
+                end
 
                 --Convert distance to binary tensor and append it to word vector
                 local distance_to_word_of_interest = intToBin(widx1 - widx2)
