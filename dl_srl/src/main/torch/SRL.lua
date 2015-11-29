@@ -39,6 +39,7 @@ function get_temporal_nn_for_srl()
         temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
     end
     temporal_net:add(temporal_convolution)
+    f:close()
     return temporal_net
 end
 
@@ -53,6 +54,7 @@ function get_constant_nn_after_polling()
     else
         constant_layers = torch.load(SRL_CONSTANT_NET_FILE)
     end
+    f:close()
     return constant_layers
 end
 
@@ -118,6 +120,7 @@ function makeArgToClassDict()
     arg_ds[1] = arg_to_class_dict
     arg_ds[2] = class_to_arg_dict
     torch.save(ARGS_DICT_FILE, {arg_to_class_dict, class_to_arg_dict})
+    f:close()
     return #args
 end
 
@@ -178,6 +181,7 @@ function train(epoch)
         end
         os.exit()
     end
+    f:close()
     print('------------------------------------------------------------------------------------------')
 end
 
