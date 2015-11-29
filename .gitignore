@@ -6,8 +6,12 @@ target/
 .pydevproject
 .settings/
 .idea/
+.pyc
 dl_srl/src/main/torch/*.html
 dl_srl/src/main/resources/*data.txt
 dl_srl/src/main/resources/*.dict
 dl_srl/src/main/resources/diction.txt
+dl_srl/src/main/resources/args.txt
+dl_srl/src/main/resources/SRL_train.txt
+dl_srl/src/main/resources/args.t7
 dl_srl/src/main/resources/*.net
