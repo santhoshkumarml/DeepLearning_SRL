@@ -93,7 +93,6 @@ function intToBin(num)
     while num > 0 do
         local div = (num % 2)
         num = math.floor(num / 2)
-        print(num, div)
         tensor[start_idx] = div
         start_idx = start_idx - 1
     end
