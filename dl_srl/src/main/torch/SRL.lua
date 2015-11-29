@@ -33,7 +33,7 @@ function get_temporal_nn_for_srl()
     local temporal_convolution = {}
     if not f then
         temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE
-                + SRL_WORD_INTEREST_DIM + SRL_VERB_DIST_DIM,
+                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
             convOutputFrame, ksz)
     else
         temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
