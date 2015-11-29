@@ -37,9 +37,9 @@ function get_temporal_nn_for_srl()
             convOutputFrame, ksz)
     else
         temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
+        f:close()
     end
     temporal_net:add(temporal_convolution)
-    f:close()
     return temporal_net
 end
 
@@ -53,8 +53,8 @@ function get_constant_nn_after_polling()
         constant_layers[3] = nn.LogSoftMax()
     else
         constant_layers = torch.load(SRL_CONSTANT_NET_FILE)
+        f:close()
     end
-    f:close()
     return constant_layers
 end
 
