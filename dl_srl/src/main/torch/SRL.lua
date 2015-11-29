@@ -47,7 +47,6 @@ function get_constant_nn_after_polling()
     local f = io.open(SRL_CONSTANT_NET_FILE)
     local constant_layers = {}
     if not f then
-        local constant_layers = {}
         constant_layers[1] = nn.Tanh()
         constant_layers[2] = nn.Linear(HUs, final_output_layer_size)
         constant_layers[3] = nn.LogSoftMax()
@@ -171,8 +170,6 @@ function train(epoch)
             local train_data = {}
             train_data[1] = {feature_vecs_for_sent, curr_target}
             function train_data:size() return 1 end
-            print(train_data:size(), train_data)
-            print(train_data[1])
             trainForSingleInstance(train_data)
         end
     end
