@@ -151,7 +151,7 @@ function train(epoch)
         local args = string.split(f:read(), " ")
         local feature_vecs_for_sent = torch.Tensor(#words, WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
-
+        print('Processing the sentence', iter)
         for widx1 = 1, #words do
             local word_of_interest, current_arg = words[widx1], args[widx1]
             for widx2 = 1, #words do
