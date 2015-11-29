@@ -69,15 +69,19 @@ function get_nn_for_sentence(sentence)
     for i = 1, #constant_layers do
         net:add(constant_layers[i])
     end
-    return net, constant_layers
+    return net
 end
 
 --Serialize the neural net
-function save_nn(net, constant_layers)
+function save_nn(net)
     --Save the first module(i.e Temporal Convolution)
     torch.save(SRL_TEMPORAL_NET_FILE, net:get(1))
-    --Save the constant layer modules
-    torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
+    print(net:size())
+    for i = 1, net:size() do
+        print(net:get(i))
+    end
+--    --Save the constant layer modules
+--    torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
 end
 
 
