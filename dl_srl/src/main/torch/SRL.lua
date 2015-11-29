@@ -106,11 +106,14 @@ end
 function makeArgToClassDict()
     local f = io.open(ARGS_FILE)
     local args = string.split(f:read(), ",")
+    local arg_ds = {}
     local arg_to_class_dict, class_to_arg_dict = {}, {}
     for idx = 1, #args do
         class_to_arg_dict[idx] = args[idx]
         arg_to_class_dict[args[idx]] = idx
     end
+    arg_ds[1] = arg_to_class_dict
+    arg_ds[2] = class_to_arg_dict
     torch.save(ARGS_DICT_FILE, {arg_to_class_dict, class_to_arg_dict})
     return #args
 end
@@ -132,7 +135,8 @@ end
 function train(epoch)
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
-    local arg_to_class_dict, class_to_arg_dict = torch.load(ARGS_DICT_FILE)
+    local arg_ds = torch.load(ARGS_DICT_FILE)
+    local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
 
     for iter = 1, train_data_size do
@@ -167,6 +171,8 @@ function train(epoch)
             local train_data = {}
             train_data[1] = {feature_vecs_for_sent, curr_target}
             function train_data:size() return 1 end
+            print(train_data:size(), train_data)
+            print(train_data[1])
             trainForSingleInstance(train_data)
         end
     end
