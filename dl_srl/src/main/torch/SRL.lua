@@ -79,7 +79,7 @@ function save_nn(net)
     local constant_layers = {}
     for i = 3, net:size() do
         print(constant_layers, net:get(i))
-        constant_layers[i-3] = net:get(i)
+        constant_layers[i-2] = net:get(i)
     end
     --Save the constant layer modules
     torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
