@@ -109,7 +109,7 @@ end
 
 --Read Arguments dictionary and generate class number for them starting with 1
 function makeArgToClassDict()
-    local f = io.open(ARG_FILE)
+    local f = io.open(ARGS_FILE)
     local args = string.split(f:read(), ",")
     local arg_to_class_dict, class_to_arg_dict = {}, {}
     for idx = 1, #args do
