@@ -159,7 +159,7 @@ function train(epoch)
                 local feature_vec_for_word = w2vutils:word2vec(curr_word)
                 if not feature_vec_for_word then
                     feature_vec_for_word = UNK
-                    print('Word Vec not known for', curr_word)
+                    --print('Word Vec not known for', curr_word)
                 else
                     feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
                 end
