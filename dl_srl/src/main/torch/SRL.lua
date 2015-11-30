@@ -146,6 +146,7 @@ function train(epoch)
         else current_run = current_run + 1 end
 
     end
+    save_nn()
     f:close()
     print('------------------------------------------------------------------------------------------')
 end
