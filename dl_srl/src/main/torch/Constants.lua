@@ -13,7 +13,7 @@ DICTIONARY_FILE = "../resources/dictionary.dict"
 LANGUAGE_NET_FILE = "../resources/language_model.net"
 
 SRL_TEMPORAL_NET_FILE = "../resources/srl_temporal.net"
-SRL_CONSTANT_NET_FILE = "../resources/srl_constant.net"
+SRL_CHECKPT_FILE = "../resources/srl_checpt.t7"
 
 GOOGLE_PRETRAINED_WORD2_VEC_FILE = '/media/santhosh/Data/workspace/nlp_project/'..
         'SRL/word2vec/GoogleNews-vectors-negative300.bin'

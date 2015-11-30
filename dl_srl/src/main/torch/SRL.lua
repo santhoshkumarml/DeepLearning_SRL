@@ -15,22 +15,27 @@ local HUs = 100
 local final_output_layer_size = -1
 local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
-local total_data_size = 112917
+local total_data_size = 45000
 local train_data_size = math.floor(0.7 * total_data_size)
 local test_data_size = total_data_size - train_data_size
 global_net = {}
 
-function init_nn()
-    global_net = nn.Sequential()
-    global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
-            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
-        convOutputFrame, ksz))
-    --    lolca sentence_size = sentence_size - (2 * math.floor(ksz/2))
-
-    global_net:add(nn.TemporalMaxPooling(1))
-    global_net:add(nn.Tanh())
-    global_net:add(nn.Linear(HUs, final_output_layer_size))
-    global_net:add(nn.LogSoftMax())
+function init_nn(isLoad)
+    local f = io.open(SRL_TEMPORAL_NET_FILE)
+    if isLoad and f~=nil then
+        global_net = torch.load(SRL_TEMPORAL_NET_FILE)
+        if f~=nil then f:close() end
+    else
+        global_net = nn.Sequential()
+        global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
+                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
+            convOutputFrame, ksz))
+        --    lolca sentence_size = sentence_size - (2 * math.floor(ksz/2))
+        global_net:add(nn.TemporalMaxPooling(1))
+        global_net:add(nn.Tanh())
+        global_net:add(nn.Linear(HUs, final_output_layer_size))
+        global_net:add(nn.LogSoftMax())
+    end
 end
 
 function update_nn_for_sentence(sentence)
@@ -41,7 +46,6 @@ end
 
 --Serialize the neural net
 function save_nn()
-    --Save the first module(i.e Temporal Convolution)
     torch.save(SRL_TEMPORAL_NET_FILE, global_net)
 end
 
@@ -97,7 +101,7 @@ function trainForSingleInstance(train_data)
 end
 
 --Train for sentences
-function train(epoch)
+function train(epoch, checkpt_run)
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_ds = torch.load(ARGS_DICT_FILE)
@@ -112,39 +116,42 @@ function train(epoch)
         local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
         print('Processing the sentence', iter)
-        for widx1 = 1, #words do
-            local word_of_interest, current_arg = words[widx1], args[widx1]
-            for widx2 = 1, #words do
-                local curr_word = words[widx2]
-                local feature_vec_for_word = w2vutils:word2vec(curr_word)
-                if not feature_vec_for_word then
-                    feature_vec_for_word = UNK
-                    --print('Word Vec not known for', curr_word)
-                else
-                    feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+        if current_run > checkpt_run then
+            for widx1 = 1, #words do
+                local word_of_interest, current_arg = words[widx1], args[widx1]
+                for widx2 = 1, #words do
+                    local curr_word = words[widx2]
+                    local feature_vec_for_word = w2vutils:word2vec(curr_word)
+                    if not feature_vec_for_word then
+                        feature_vec_for_word = UNK
+                        --print('Word Vec not known for', curr_word)
+                    else
+                        feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+                    end
+
+                    --Convert distance to binary tensor and append it to word vector
+                    local distance_to_word_of_interest = intToBin(widx1 - widx2)
+                    local distance_to_predicate = intToBin(predicate_idx - widx2)
+                    feature_vec_for_word = torch.cat(
+                        torch.cat(feature_vec_for_word, distance_to_word_of_interest),
+                        distance_to_predicate)
+                    feature_vecs_for_sent[widx2 + 1] = feature_vec_for_word
                 end
 
-                --Convert distance to binary tensor and append it to word vector
-                local distance_to_word_of_interest = intToBin(widx1 - widx2)
-                local distance_to_predicate = intToBin(predicate_idx - widx2)
-                feature_vec_for_word = torch.cat(
-                    torch.cat(feature_vec_for_word, distance_to_word_of_interest),
-                    distance_to_predicate)
-                feature_vecs_for_sent[widx2 + 1] = feature_vec_for_word
+                local curr_target = arg_to_class_dict[current_arg]
+                local train_data = {}
+                train_data[1] = {feature_vecs_for_sent, curr_target}
+                function train_data:size() return 1 end
+                trainForSingleInstance(train_data)
             end
-
-            local curr_target = arg_to_class_dict[current_arg]
-            local train_data = {}
-            train_data[1] = {feature_vecs_for_sent, curr_target}
-            function train_data:size() return 1 end
-            trainForSingleInstance(train_data)
+            collectgarbage()
+            if current_run == 100 then
+                save_nn()
+                current_run = 0
+            else current_run = current_run + 1 end
+            torch.save(SRL_CHECKPT_FILE, {epoch, current_run})
+        else current_run = current_run + 1
         end
-        collectgarbage()
-        if current_run == 100 then
-            save_nn()
-            current_run = 0
-        else current_run = current_run + 1 end
-
     end
     save_nn()
     f:close()
@@ -159,12 +166,20 @@ end
 
 --Main Function
 function main()
-    doCleanup()
+    --doCleanup()
+    local checkPt = {1, 0}
+    local f = io.open(SRL_CHECKPT_FILE)
+    if f~=nil then
+        checkPt = torch.load(SRL_CHECKPT_FILE)
+        f:close()
+    end
+    local check_epoch = checkPt[1]
+    local check_currentRun = checkPt[2]
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
-    init_nn()
-    for epoch = 1, EPOCH do
-        train(epoch)
+    init_nn(true)
+    for epoch = check_epoch, EPOCH do
+        train(epoch, check_currentRun)
     end
 end
 main()
