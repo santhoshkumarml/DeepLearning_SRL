@@ -145,7 +145,12 @@ function trainAndUpdatedWordVec(epoch)
                 local word = words[batch_data_idx]
                 local word_dict = torch.load(DICTIONARY_FILE)
                 local word_vec = word_dict[word]
-                word_dict[word] = word_vec - net.gradInput
+                local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
+                for idx = 1, WORD_VEC_SIZE do
+                    word_vec[idx] = word_vec[idx] - word_vec[idx] * net.gradInput[gradIpOffset + idx]
+                end
+                word_dict[word] = word_vec
+                torch.save(DICTIONARY_FILE, word_dict)
             end
 
 			trainer:train(batch_train_data, editWordVec)
