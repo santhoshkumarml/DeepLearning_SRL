@@ -155,7 +155,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
---            collectgarbage()
+            collectgarbage()
         end
     end
     save_nn()
