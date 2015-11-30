@@ -7,6 +7,7 @@
 require 'torch';
 require 'nn';
 require 'Constants';
+require 'MyStochasticGradient';
 
 -- create/update and store word vectors for dictionary.
 function initOrUpdateWordVecForWordsInDict(netGradIp)
@@ -67,6 +68,8 @@ function readBatchData(f)
 	local batch_train = {}
 	word_dict = torch.load(DICTIONARY_FILE)
 
+    local words = {}
+
     while cnt_train_data <= BATCH_SIZE do
         local train_data = {}
         local pl = f:read()
@@ -74,14 +77,12 @@ function readBatchData(f)
 
         if not pl or not nl then break end
 
-        local pos_words = {}
-        local neg_words = {}
-
         local start_idx = 1
         local end_idx = WORD_VEC_SIZE
 
         pl_split = string.split(pl," ")
         nl_split = string.split(nl," ")
+        local mid_word = math.ceil(#pl_split / 2)
 
         for w_idx =1, #pl_split do
             local word = pl_split[w_idx]
@@ -89,7 +90,7 @@ function readBatchData(f)
             for idx = start_idx, end_idx do 
                 train_data[idx] = pos_word_vec[idx - start_idx + 1]
             end
-            table.insert(pos_words, word)
+            if w_idx == mid_word then table.insert(words, word) end
             start_idx = end_idx + 1
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
@@ -105,7 +106,7 @@ function readBatchData(f)
             for idx = start_idx, end_idx do 
                 train_data[idx] = neg_word_vec[idx - start_idx + 1]
             end
-            table.insert(neg_words, word)
+            if w_idx == mid_word then table.insert(words, word) end
             start_idx = end_idx + 1
             end_idx = start_idx + WORD_VEC_SIZE - 1
         end
@@ -119,7 +120,7 @@ function readBatchData(f)
 
     function batch_train:size() return cnt_train_data * 2 end
 
-    return  batch_train
+    return  batch_train, words
 end
 
 
@@ -128,7 +129,7 @@ function trainAndUpdatedWordVec(epoch)
     -- Define Loss Function
     local net = get_or_construct_nn()
     local criterion = nn.ClassNLLCriterion()
-    local trainer = nn.StochasticGradient(net, criterion)
+    local trainer = MyStochasticGradient(net, criterion)
     trainer.learningRate = 0.01
     trainer.maxIteration = 1
 
@@ -137,13 +138,22 @@ function trainAndUpdatedWordVec(epoch)
     	local f = io.open(TRAIN_DATA_FILE_PATH)
         -- Run Batch Training and Gradient descend
     	while true do
-            local batch_train_data = readBatchData(f)
+            local batch_train_data, words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
-			trainer:train(batch_train_data)
+
+	    	function editWordVec(batch_data_idx)
+                local word = words[batch_data_idx]
+                local word_dict = torch.load(DICTIONARY_FILE)
+                local word_vec = word_dict[word]
+                word_dict[word] = word_vec - net.gradInput
+            end
+
+			trainer:train(batch_train_data, editWordVec)
         end
 
+        -- no Need Already taken care in the callback
         -- Update Word Vector and the network
-        initOrUpdateWordVecForWordsInDict(net.gradInput)
+        --initOrUpdateWordVecForWordsInDict(net.gradInput)
         torch.save(LANGUAGE_NET_FILE, net)
     end
 end

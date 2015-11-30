@@ -3,9 +3,9 @@
 -- Date: 11/30/15
 --
 
-local StochasticGradient = torch.class('MyStochasticGradient')
+local MyStochasticGradient = torch.class('MyStochasticGradient')
 
-function StochasticGradient:__init(module, criterion)
+function MyStochasticGradient:__init(module, criterion)
     self.learningRate = 0.01
     self.learningRateDecay = 0
     self.maxIteration = 25
@@ -15,7 +15,7 @@ function StochasticGradient:__init(module, criterion)
     self.verbose = true
 end
 
-function StochasticGradient:train(dataset)
+function MyStochasticGradient:train(dataset)
     local iteration = 1
     local currentLearningRate = self.learningRate
     local module = self.module
