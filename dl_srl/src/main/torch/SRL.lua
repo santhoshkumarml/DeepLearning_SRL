@@ -13,7 +13,7 @@ local convOutputFrame = 100
 local HUs = 100
 --Later loaded to number of argument classes
 local final_output_layer_size = -1
-local UNK = torch.randn(WORD_VEC_SIZE + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
+local UNK = torch.randn(WORD_VEC_SIZE)
 
 local total_data_size = 112917
 local train_data_size = math.floor(0.7 * total_data_size)
