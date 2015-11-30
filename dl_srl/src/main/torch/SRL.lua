@@ -136,10 +136,6 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                         torch.cat(feature_vec_for_word, distance_to_word_of_interest),
                         distance_to_predicate)
                     feature_vecs_for_sent[widx2 + 1] = feature_vec
-
-                    distance_to_word_of_interest:free()
-                    distance_to_predicate:free()
-                    feature_vec:free()
                 end
 
                 local curr_target = arg_to_class_dict[current_arg]
