@@ -144,6 +144,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 function train_data:size() return 1 end
                 trainForSingleInstance(train_data)
                 feature_vecs_for_sent:free()
+                collectgarbage()
             end
             if current_run == 100 then
                 save_nn()
@@ -151,7 +152,6 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
-            collectgarbage()
         end
     end
     save_nn()
