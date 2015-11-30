@@ -178,8 +178,8 @@ function train(epoch)
             train_data[1] = {feature_vecs_for_sent, curr_target}
             function train_data:size() return 1 end
             trainForSingleInstance(train_data)
+            collectgarbage()
         end
-        collectgarbage()
     end
     f:close()
     print('------------------------------------------------------------------------------------------')
