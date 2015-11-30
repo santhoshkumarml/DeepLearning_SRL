@@ -135,6 +135,7 @@ function trainForSingleInstance(train_data)
     trainer.maxIteration = 1
     trainer:train(train_data)
     save_nn(net)
+    collectgarbage()
 end
 
 --Train for sentences
