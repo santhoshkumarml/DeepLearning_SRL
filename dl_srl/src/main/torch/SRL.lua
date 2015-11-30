@@ -113,8 +113,9 @@ function train(epoch, epoch_checkpt, sent_checkpt)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        print('Processing the sentence', sent_num)
+
         if epoch > epoch_checkpt or sent_num > sent_checkpt then
+            print('Processing the sentence', sent_num)
             for widx1 = 1, #words do
                 local word_of_interest, current_arg = words[widx1], args[widx1]
                 local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
@@ -144,7 +145,6 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 function train_data:size() return 1 end
                 trainForSingleInstance(train_data)
                 feature_vecs_for_sent:free()
-                collectgarbage()
             end
             if current_run == 100 then
                 save_nn()
@@ -152,6 +152,9 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
+            collectgarbage()
+        else
+            print('Skipped Processing Sentence:',sent_num, 'Epoch:', epoch)
         end
     end
     save_nn()
