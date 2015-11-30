@@ -16,7 +16,7 @@ local final_output_layer_size = -1
 local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
 local total_data_size = 45000
-local train_data_size = math.floor(0.7 * total_data_size)
+local train_data_size = 4412
 local test_data_size = total_data_size - train_data_size
 global_net = {}
 
@@ -135,6 +135,8 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                     local feature_vec = torch.cat(
                         torch.cat(feature_vec_for_word, distance_to_word_of_interest),
                         distance_to_predicate)
+                    distance_to_predicate:free()
+                    distance_to_word_of_interest:free()
                     feature_vecs_for_sent[widx2 + 1] = feature_vec
                 end
 
