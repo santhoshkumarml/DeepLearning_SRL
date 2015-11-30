@@ -113,12 +113,12 @@ function train(epoch, epoch_checkpt, sent_checkpt)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
-                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
         print('Processing the sentence', sent_num)
         if epoch > epoch_checkpt or sent_num > sent_checkpt then
             for widx1 = 1, #words do
                 local word_of_interest, current_arg = words[widx1], args[widx1]
+                local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
+                        + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
                 for widx2 = 1, #words do
                     local curr_word = words[widx2]
                     local feature_vec_for_word = w2vutils:word2vec(curr_word)
@@ -136,7 +136,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                         torch.cat(feature_vec_for_word, distance_to_word_of_interest),
                         distance_to_predicate)
                     feature_vecs_for_sent[widx2 + 1] = feature_vec
-                    
+
                     distance_to_word_of_interest:free()
                     distance_to_predicate:free()
                     feature_vec:free()
