@@ -139,7 +139,7 @@ function train(epoch)
             function train_data:size() return 1 end
             trainForSingleInstance(train_data)
         end
-        collectGarbage()
+        collectgarbage()
         if current_run == 100 then
             save_nn()
             current_run = 0
