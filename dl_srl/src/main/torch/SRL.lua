@@ -132,10 +132,15 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                     --Convert distance to binary tensor and append it to word vector
                     local distance_to_word_of_interest = intToBin(widx1 - widx2)
                     local distance_to_predicate = intToBin(predicate_idx - widx2)
-                    feature_vec_for_word = torch.cat(
+                    local feature_vec = torch.cat(
                         torch.cat(feature_vec_for_word, distance_to_word_of_interest),
                         distance_to_predicate)
-                    feature_vecs_for_sent[widx2 + 1] = feature_vec_for_word
+                    feature_vecs_for_sent[widx2 + 1] = feature_vec
+
+                    feature_vec_for_word:free()
+                    distance_to_word_of_interest:free()
+                    distance_to_predicate:free()
+                    feature_vec:free()
                 end
 
                 local curr_target = arg_to_class_dict[current_arg]
@@ -143,6 +148,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 train_data[1] = {feature_vecs_for_sent, curr_target}
                 function train_data:size() return 1 end
                 trainForSingleInstance(train_data)
+                feature_vecs_for_sent:free()
             end
             if current_run == 100 then
                 save_nn()
@@ -150,7 +156,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
-            collectgarbage()
+--            collectgarbage()
         end
     end
     save_nn()
