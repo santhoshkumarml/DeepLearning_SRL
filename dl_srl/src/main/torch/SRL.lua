@@ -144,13 +144,13 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 function train_data:size() return 1 end
                 trainForSingleInstance(train_data)
             end
-            collectgarbage()
             if current_run == 100 then
                 save_nn()
                 local checkPt = {epoch, sent_num}
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
+            collectgarbage()
         end
     end
     save_nn()
