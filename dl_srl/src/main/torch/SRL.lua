@@ -101,7 +101,7 @@ function trainForSingleInstance(train_data)
 end
 
 --Train for sentences
-function train(epoch, checkpt_run)
+function train(epoch, epoch_checkpt, sent_checkpt)
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_ds = torch.load(ARGS_DICT_FILE)
@@ -109,14 +109,14 @@ function train(epoch, checkpt_run)
     local f = io.open(SRL_TRAIN_FILE)
     local current_run = 0
 
-    for iter = 1, train_data_size do
+    for sent_num = 1, train_data_size do
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
         local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
-        print('Processing the sentence', iter)
-        if current_run > checkpt_run then
+        print('Processing the sentence', sent_num)
+        if epoch > epoch_checkpt or sent_num > sent_checkpt then
             for widx1 = 1, #words do
                 local word_of_interest, current_arg = words[widx1], args[widx1]
                 for widx2 = 1, #words do
@@ -147,9 +147,9 @@ function train(epoch, checkpt_run)
             collectgarbage()
             if current_run == 100 then
                 save_nn()
+                torch.save(SRL_CHECKPT_FILE, {epoch, sent_num})
                 current_run = 0
             else current_run = current_run + 1 end
-            torch.save(SRL_CHECKPT_FILE, {epoch, current_run})
         else current_run = current_run + 1
         end
     end
@@ -173,13 +173,13 @@ function main()
         checkPt = torch.load(SRL_CHECKPT_FILE)
         f:close()
     end
-    local check_epoch = checkPt[1]
-    local check_currentRun = checkPt[2]
+    local epoch_checkpt = checkPt[1]
+    local sent_checkpt = checkPt[2]
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
     init_nn(true)
-    for epoch = check_epoch, EPOCH do
-        train(epoch, check_currentRun)
+    for epoch = epoch_checkpt, EPOCH do
+        train(epoch, epoch_checkpt, sent_checkpt)
     end
 end
 main()
