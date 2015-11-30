@@ -147,10 +147,10 @@ function train(epoch, epoch_checkpt, sent_checkpt)
             collectgarbage()
             if current_run == 100 then
                 save_nn()
-                torch.save(SRL_CHECKPT_FILE, {epoch, sent_num})
+                local checkPt = {epoch, sent_num}
+                torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
-        else current_run = current_run + 1
         end
     end
     save_nn()
@@ -167,7 +167,7 @@ end
 --Main Function
 function main()
     --doCleanup()
-    local checkPt = {1, 0}
+    local checkPt = {1, 1}
     local f = io.open(SRL_CHECKPT_FILE)
     if f~=nil then
         checkPt = torch.load(SRL_CHECKPT_FILE)
