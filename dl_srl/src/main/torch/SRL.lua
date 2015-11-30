@@ -36,8 +36,7 @@ end
 function update_nn_for_sentence(sentence)
     local sentence_size = sentence:size(1)
     sentence_size = sentence_size - (2 * math.floor(ksz/2))
-    global_net:remove(2)
-    global_net:insert(2, nn.TemporalMaxPooling(sentence_size))
+    global_net.modules[2] = nn.TemporalMaxPooling(sentence_size)
 end
 
 --Serialize the neural net
