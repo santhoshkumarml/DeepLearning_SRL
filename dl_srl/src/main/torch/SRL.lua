@@ -97,7 +97,6 @@ function trainForSingleInstance(train_data)
     trainer.learningRate = 0.01
     trainer.maxIteration = 1
     trainer:train(train_data)
-    save_nn()
 end
 
 --Train for sentences
