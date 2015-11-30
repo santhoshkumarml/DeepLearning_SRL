@@ -13,77 +13,37 @@ local convOutputFrame = 100
 local HUs = 100
 --Later loaded to number of argument classes
 local final_output_layer_size = -1
-local UNK = torch.randn(WORD_VEC_SIZE)
+local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
 local total_data_size = 112917
 local train_data_size = math.floor(0.7 * total_data_size)
 local test_data_size = total_data_size - train_data_size
+global_net = {}
 
-function sample_test_sentence(sentence_size)
-    local train_sentence = torch.Tensor(sentence_size, WORD_VEC_SIZE
-            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM)
-    return train_sentence
+function init_nn()
+    global_net = nn.Sequential()
+    global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
+            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
+        convOutputFrame, ksz))
+    --    lolca sentence_size = sentence_size - (2 * math.floor(ksz/2))
+
+    global_net:add(nn.TemporalMaxPooling(1))
+    global_net:add(nn.Tanh())
+    global_net:add(nn.Linear(HUs, final_output_layer_size))
+    global_net:add(nn.LogSoftMax())
 end
 
-
---Load the Temporal Convolution layer for the neural network
-function get_temporal_nn_for_srl()
-    local f = io.open(SRL_TEMPORAL_NET_FILE)
-    local temporal_net = nn.Sequential()
-    local temporal_convolution = {}
-    if not f then
-        temporal_convolution = nn.TemporalConvolution(WORD_VEC_SIZE
-                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
-            convOutputFrame, ksz)
-    else
-        temporal_convolution = torch.load(SRL_TEMPORAL_NET_FILE)
-        f:close()
-    end
-    temporal_net:add(temporal_convolution)
-    return temporal_net
-end
-
---Load the constant layers for the neural network
-function get_constant_nn_after_polling()
-    local f = io.open(SRL_CONSTANT_NET_FILE)
-    local constant_layers = {}
-    if not f then
-        constant_layers[1] = nn.Tanh()
-        constant_layers[2] = nn.Linear(HUs, final_output_layer_size)
-        constant_layers[3] = nn.LogSoftMax()
-    else
-        constant_layers = torch.load(SRL_CONSTANT_NET_FILE)
-        f:close()
-    end
-    return constant_layers
-end
-
---Load the neural network for sentence
-function get_nn_for_sentence(sentence)
-    local net = get_temporal_nn_for_srl()
-    local constant_layers = get_constant_nn_after_polling()
+function update_nn_for_sentence(sentence)
     local sentence_size = sentence:size(1)
-
     sentence_size = sentence_size - (2 * math.floor(ksz/2))
-
-    net:add(nn.TemporalMaxPooling(sentence_size))
-
-    for i = 1, #constant_layers do
-        net:add(constant_layers[i])
-    end
-    return net
+    global_net:remove(2)
+    global_net:insert(2, nn.TemporalMaxPooling(sentence_size))
 end
 
 --Serialize the neural net
-function save_nn(net)
+function save_nn()
     --Save the first module(i.e Temporal Convolution)
-    torch.save(SRL_TEMPORAL_NET_FILE, net:get(1))
-    local constant_layers = {}
-    for i = 3, net:size() do
-        constant_layers[i-2] = net:get(i)
-    end
-    --Save the constant layer modules
-    torch.save(SRL_CONSTANT_NET_FILE, constant_layers)
+    torch.save(SRL_TEMPORAL_NET_FILE, global_net)
 end
 
 
@@ -128,13 +88,13 @@ end
 --Train on an instance of sentences with a specific word of interest.
 function trainForSingleInstance(train_data)
     local sentence = train_data[1][1]
-    local net = get_nn_for_sentence(sentence)
+    update_nn_for_sentence(sentence)
     local criterion = nn.ClassNLLCriterion()
-    local trainer = nn.StochasticGradient(net, criterion)
+    local trainer = nn.StochasticGradient(global_net, criterion)
     trainer.learningRate = 0.01
     trainer.maxIteration = 1
     trainer:train(train_data)
-    save_nn(net)
+    save_nn()
 end
 
 --Train for sentences
@@ -144,6 +104,7 @@ function train(epoch)
     local arg_ds = torch.load(ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
+    local current_run = 0
 
     for iter = 1, train_data_size do
         local predicate_idx = tonumber(f:read())
@@ -178,8 +139,13 @@ function train(epoch)
             train_data[1] = {feature_vecs_for_sent, curr_target}
             function train_data:size() return 1 end
             trainForSingleInstance(train_data)
-            collectgarbage()
         end
+
+        if current_run == 100 then
+            save_nn()
+            current_run = 0
+        else current_run = current_run + 1 end
+
     end
     f:close()
     print('------------------------------------------------------------------------------------------')
@@ -189,7 +155,6 @@ end
 -- Remove the serialized nets
 function doCleanup()
     os.remove(SRL_TEMPORAL_NET_FILE)
-    os.remove(SRL_CONSTANT_NET_FILE)
 end
 
 --Main Function
@@ -197,10 +162,9 @@ function main()
     doCleanup()
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
+    init_nn()
     for epoch = 1, EPOCH do
         train(epoch)
     end
 end
-
-
 main()
