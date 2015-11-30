@@ -112,8 +112,8 @@ function train(epoch, epoch_checkpt, sent_checkpt)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-
         if epoch > epoch_checkpt or sent_num > sent_checkpt then
+            collectgarbage()
             print('Processing the sentence', sent_num)
             for widx1 = 1, #words do
                 local word_of_interest, current_arg = words[widx1], args[widx1]
@@ -151,7 +151,6 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 torch.save(SRL_CHECKPT_FILE, checkPt)
                 current_run = 0
             else current_run = current_run + 1 end
-            collectgarbage()
         else
             print('Skipped Processing Sentence:',sent_num, 'Epoch:', epoch)
         end
