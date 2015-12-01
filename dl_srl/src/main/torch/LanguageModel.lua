@@ -146,7 +146,7 @@ function trainAndUpdatedWordVec(epoch)
 	    	if batch_train_data:size() == 0 then break end
 
 	    	function editWordVec(batch_data_idx)
-                local word = g[batch_data_idx]
+                local word = words[batch_data_idx]
                 print('Editing word vec for word:', word)
                 local word_dict = torch.load(DICTIONARY_FILE)
                 local word_vec = word_dict[word]
