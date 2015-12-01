@@ -8,6 +8,7 @@ require 'torch';
 require 'nn';
 require 'Constants';
 require 'MyStochasticGradient';
+local w2vutils = require 'w2vutils'
 
 -- create/update and store word vectors for dictionary.
 function initOrUpdateWordVecForWordsInDict(netGradIp)
@@ -28,7 +29,9 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
         table.insert(words, START)
         table.insert(words, word)
         if not word_dict[word] then
-            word_dict[word] = torch.randn(WORD_VEC_SIZE)
+            local google_vec = w2vutils:word2vec(word):narrow(1, 1, WORD_VEC_SIZE)
+            if not google_vec then google_vec = torch.randn(WORD_VEC_SIZE) end
+            word_dict[word] = google_vec
         else
             local word_vec = word_dict[word]
             for idx = 1, WORD_VEC_SIZE do
