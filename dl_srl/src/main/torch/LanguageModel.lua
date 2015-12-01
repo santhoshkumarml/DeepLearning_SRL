@@ -8,10 +8,10 @@ require 'torch';
 require 'nn';
 require 'Constants';
 require 'MyStochasticGradient';
-local w2vutils = require 'w2vutils'
 
 -- create/update and store word vectors for dictionary.
 function initOrUpdateWordVecForWordsInDict(netGradIp)
+    local w2vutils = require 'w2vutils'
     local f = io.open(WORDS_FILE_PATH)
     local word_dict = {}
     if netGradIp then

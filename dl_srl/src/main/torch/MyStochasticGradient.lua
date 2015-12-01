@@ -15,7 +15,7 @@ function MyStochasticGradient:__init(module, criterion)
     self.verbose = true
 end
 
-function MyStochasticGradient:train(dataset)
+function MyStochasticGradient:train(dataset, hookExample)
     local iteration = 1
     local currentLearningRate = self.learningRate
     local module = self.module
@@ -27,8 +27,6 @@ function MyStochasticGradient:train(dataset)
             shuffledIndices[t] = t
         end
     end
-
-    print("# StochasticGradient: training")
 
     while true do
         local currentError = 0
@@ -42,8 +40,8 @@ function MyStochasticGradient:train(dataset)
             module:updateGradInput(input, criterion:updateGradInput(module.output, target))
             module:accUpdateGradParameters(input, criterion.gradInput, currentLearningRate)
 
-            if self.hookExample then
-                self.hookExample(self, shuffledIndices[t])
+            if hookExample then
+                hookExample(self, shuffledIndices[t])
             end
         end
 
@@ -53,14 +51,10 @@ function MyStochasticGradient:train(dataset)
             self.hookIteration(self, iteration, currentError)
         end
 
-        if self.verbose then
-            print("# current error = " .. currentError)
-        end
         iteration = iteration + 1
         currentLearningRate = self.learningRate/(1+iteration*self.learningRateDecay)
         if self.maxIteration > 0 and iteration > self.maxIteration then
-            print("# StochasticGradient: you have reached the maximum number of iterations")
-            print("# training error = " .. currentError)
+            print("# My StochasticGradient - training error = " .. currentError)
             break
         end
     end
