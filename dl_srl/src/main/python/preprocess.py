@@ -18,6 +18,7 @@ def makeWindowAndTrainingData(diction):
             sent_count = 1
             for sent in fp:
                 print 'Processing Line:', sent_count
+                sent_count += 1
                 words = sent.split()
                 words = [START for i in range(MID)] + words + [END for i in range(MID)]
                 pos_window_words = deque(words[0 : WINDOW_SIZE])
