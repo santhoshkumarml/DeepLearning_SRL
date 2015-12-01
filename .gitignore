@@ -15,3 +15,4 @@ dl_srl/src/main/resources/args.txt
 dl_srl/src/main/resources/SRL_train.txt
 dl_srl/src/main/resources/args.t7
 dl_srl/src/main/resources/*.net
+dl_srl/src/main/resources/srl_checpt.t7
