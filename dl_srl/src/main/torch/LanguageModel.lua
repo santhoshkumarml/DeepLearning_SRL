@@ -178,7 +178,7 @@ end
 function main()
     doCleanup()
     initOrUpdateWordVecForWordsInDict()
-    collectiongarbage()
+    collectgarbage()
     trainAndUpdatedWordVec(EPOCH)
 end
 
