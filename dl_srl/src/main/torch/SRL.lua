@@ -18,6 +18,11 @@ local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 local total_data_size = 45000
 local train_data_size = 4412
 local test_data_size = total_data_size - train_data_size
+
+local test_sent_start = 4413
+local test_sent_end = 4613
+
+
 global_net = {}
 
 function init_nn(isLoad)
@@ -25,6 +30,7 @@ function init_nn(isLoad)
     if isLoad and f~=nil then
         global_net = torch.load(SRL_TEMPORAL_NET_FILE)
         if f~=nil then f:close() end
+        print('Net Loaded')
     else
         global_net = nn.Sequential()
         global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
@@ -168,6 +174,65 @@ function doCleanup()
     os.remove(SRL_TEMPORAL_NET_FILE)
 end
 
+
+function test_SRL()
+    local arg_ds = torch.load(ARGS_DICT_FILE)
+    local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
+    local f = io.open(SRL_TRAIN_FILE)
+    local accuracy, total_ins = 0, 0
+
+    for sent_num = 1, test_sent_start - 1 do
+        local predicate_idx, words, args = f:read(), f:read(), f:read()
+    end
+
+    for sent_num = test_sent_start, test_sent_end do
+        local predicate_idx = tonumber(f:read())
+        local words = string.split(f:read(), " ")
+        local args = string.split(f:read(), " ")
+        print('Processing the sentence', sent_num)
+        for widx1 = 1, #words do
+            local word_of_interest, current_arg = words[widx1], args[widx1]
+            local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
+                    + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
+            for widx2 = 1, #words do
+                local curr_word = words[widx2]
+                local feature_vec_for_word = w2vutils:word2vec(curr_word)
+                if not feature_vec_for_word then
+                    feature_vec_for_word = UNK
+                    --print('Word Vec not known for', curr_word)
+                else
+                    feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+                end
+
+                --Convert distance to binary tensor and append it to word vector
+                local distance_to_word_of_interest = intToBin(widx1 - widx2)
+                local distance_to_predicate = intToBin(predicate_idx - widx2)
+                local feature_vec = torch.cat(
+                    torch.cat(feature_vec_for_word, distance_to_word_of_interest),
+                    distance_to_predicate)
+                distance_to_predicate:free()
+                distance_to_word_of_interest:free()
+                feature_vecs_for_sent[widx2 + 1] = feature_vec
+            end
+
+            local real_target = arg_to_class_dict[current_arg]
+
+            update_nn_for_sentence(feature_vecs_for_sent)
+
+            local pred_target = global_net:forward(feature_vecs_for_sent)
+            print('Sent ', sent_num,':', pred_target)
+            if real_target == pred_target then accuracy = accuracy +1 end
+            total_ins = total_ins + 1
+
+            feature_vecs_for_sent:free()
+        end
+    end
+    accuracy = accuracy / total_ins
+    return accuracy
+end
+
+
+
 --Main Function
 function main()
     --doCleanup()
@@ -182,8 +247,10 @@ function main()
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
     init_nn(true)
-    for epoch = epoch_checkpt, EPOCH do
-        train(epoch, epoch_checkpt, sent_checkpt)
-    end
+--    for epoch = epoch_checkpt, EPOCH do
+--        train(epoch, epoch_checkpt, sent_checkpt)
+--    end
+    local accuracy = test_SRL()
+    print(accuracy)
 end
 main()
