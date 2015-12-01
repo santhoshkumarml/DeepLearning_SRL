@@ -106,7 +106,16 @@ function trainForSingleInstance(train_data)
 end
 
 --Train for sentences
-function train(epoch, epoch_checkpt, sent_checkpt)
+function train(epoch)
+    local checkPt = {1, 1}
+    local f = io.open(SRL_CHECKPT_FILE)
+    if f~=nil then
+        checkPt = torch.load(SRL_CHECKPT_FILE)
+        f:close()
+    end
+    local epoch_checkpt = checkPt[1]
+    local sent_checkpt = checkPt[2]
+
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
     local arg_ds = torch.load(ARGS_DICT_FILE)
@@ -254,21 +263,14 @@ end
 --Main Function
 function main()
     --doCleanup()
-    local checkPt = {1, 1}
-    local f = io.open(SRL_CHECKPT_FILE)
-    if f~=nil then
-        checkPt = torch.load(SRL_CHECKPT_FILE)
-        f:close()
-    end
-    local epoch_checkpt = checkPt[1]
-    local sent_checkpt = checkPt[2]
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
     init_nn(true)
 --    for epoch = epoch_checkpt, EPOCH do
---        train(epoch, epoch_checkpt, sent_checkpt)
+--        train(epoch)
 --    end
     local accuracy = test_SRL()
     print(accuracy)
 end
+
 main()
