@@ -157,7 +157,7 @@ function trainAndUpdatedWordVec(epoch)
                 end
                 word_dict[word] = word_vec
             end
-            
+
 			trainer:train(batch_train_data, editWordVec)
             torch.save(DICTIONARY_FILE, word_dict)
         end
@@ -178,6 +178,7 @@ end
 function main()
     doCleanup()
     initOrUpdateWordVecForWordsInDict()
+    collectiongarbage()
     trainAndUpdatedWordVec(EPOCH)
 end
 
