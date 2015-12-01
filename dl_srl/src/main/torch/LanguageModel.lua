@@ -29,8 +29,9 @@ function initOrUpdateWordVecForWordsInDict(netGradIp)
         table.insert(words, START)
         table.insert(words, word)
         if not word_dict[word] then
-            local google_vec = w2vutils:word2vec(word):narrow(1, 1, WORD_VEC_SIZE)
+            local google_vec = w2vutils:word2vec(word)
             if not google_vec then google_vec = torch.randn(WORD_VEC_SIZE) end
+            google_vec = google_vec:narrow(1, 1, WORD_VEC_SIZE)
             word_dict[word] = google_vec
         else
             local word_vec = word_dict[word]
