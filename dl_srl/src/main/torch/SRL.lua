@@ -168,6 +168,20 @@ function train(epoch, epoch_checkpt, sent_checkpt)
     print('------------------------------------------------------------------------------------------')
 end
 
+function findClasNumFromProbs(probs)
+    local probs = probs[1]
+    local size = probs:size(1)
+    local max_prob, max_index = -4000, -1
+    for index = 1, size do
+        local curr_prob = probs[index]
+        if curr_prob > max_prob then
+            max_prob = curr_prob
+            max_index = index
+        end
+    end
+    return max_index
+end
+
 
 -- Remove the serialized nets
 function doCleanup()
@@ -219,8 +233,12 @@ function test_SRL()
 
             update_nn_for_sentence(feature_vecs_for_sent)
 
-            local pred_target = global_net:forward(feature_vecs_for_sent)
+            local logProbs = global_net:forward(feature_vecs_for_sent)
+            local probs = torch.exp(logProbs)
+            local pred_target = findClasNumFromProbs(probs)
+
             print('Sent ', sent_num,':', pred_target)
+
             if real_target == pred_target then accuracy = accuracy +1 end
             total_ins = total_ins + 1
 
