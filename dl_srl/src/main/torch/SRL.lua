@@ -15,12 +15,11 @@ local HUs = 100
 local final_output_layer_size = -1
 local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
-local total_data_size = 45000
-local train_data_size = 4412
-local test_data_size = total_data_size - train_data_size
+local train_sent_start = 1
+local train_sent_end = 300
 
-local test_sent_start = 4413
-local test_sent_end = 4613
+local test_sent_start = 2550
+local test_sent_end = 2570
 
 
 local global_net = {}
@@ -63,7 +62,7 @@ function intToBin(num)
     if num > 15 then num = 15 else if num < -15 then num = -15 end end
     if num < 0 then isNeg = true end
     local num = math.abs(num)
-    local tensor = torch.Tensor(5)
+    local tensor = torch.Tensor(5):fill(0)
     local start_idx = 5
     while num > 0 do
         local div = (num % 2)
@@ -106,15 +105,8 @@ function trainForSingleInstance(train_data)
 end
 
 --Train for sentences
-function train(epoch)
-    local checkPt = {1, 1}
-    local f = io.open(SRL_CHECKPT_FILE)
-    if f~=nil then
-        checkPt = torch.load(SRL_CHECKPT_FILE)
-        f:close()
-    end
-    local epoch_checkpt = checkPt[1]
-    local sent_checkpt = checkPt[2]
+function train(epoch, epoch_checkpt, sent_checkpt)
+    if train_sent_end == -1 then return -1 end
 
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
@@ -123,7 +115,11 @@ function train(epoch)
     local f = io.open(SRL_TRAIN_FILE)
     local current_run = 0
 
-    for sent_num = 1, train_data_size do
+    for sent_num = 1, train_sent_start - 1 do
+        local predicate_idx, words, args = f:read(), f:read(), f:read()
+    end
+
+    for sent_num = train_sent_start, train_sent_end do
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
@@ -162,7 +158,7 @@ function train(epoch)
                 trainForSingleInstance(train_data)
                 feature_vecs_for_sent:free()
             end
-            if current_run == 100 then
+            if current_run == 25 then
                 save_nn()
                 local checkPt = {epoch, sent_num}
                 torch.save(SRL_CHECKPT_FILE, checkPt)
@@ -192,18 +188,12 @@ function findClasNumFromProbs(probs)
 end
 
 
--- Remove the serialized nets
-function doCleanup()
-    os.remove(SRL_TEMPORAL_NET_FILE)
-end
-
-
 function test_SRL()
     local arg_ds = torch.load(ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
     local accuracy, total_ins = 0, 0
-
+    if test_sent_end == -1 then return -1 end
     for sent_num = 1, test_sent_start - 1 do
         local predicate_idx, words, args = f:read(), f:read(), f:read()
     end
@@ -246,8 +236,6 @@ function test_SRL()
             local probs = torch.exp(logProbs)
             local pred_target = findClasNumFromProbs(probs)
 
-            print('Sent ', sent_num,':', pred_target)
-
             if real_target == pred_target then accuracy = accuracy +1 end
             total_ins = total_ins + 1
 
@@ -258,17 +246,38 @@ function test_SRL()
     return accuracy
 end
 
+function loadCheckPt()
+    local checkPt = {1, 0}
+    local f = io.open(SRL_CHECKPT_FILE)
+    if f~=nil then
+        checkPt = torch.load(SRL_CHECKPT_FILE)
+        f:close()
+    end
+    return checkPt
+end
 
+
+-- Remove the serialized nets
+function doCleanup()
+    os.remove(SRL_TEMPORAL_NET_FILE)
+    os.remove(SRL_CHECKPT_FILE)
+end
 
 --Main Function
 function main()
-    --doCleanup()
+   doCleanup()
+
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
     init_nn(true)
---    for epoch = epoch_checkpt, EPOCH do
---        train(epoch)
---    end
+
+    local checkPt = loadCheckPt()
+    local epoch_checkpt, sent_checkpt = checkPt[1], checkPt[2]
+
+    for epoch = epoch_checkpt, EPOCH do
+        train(epoch, epoch_checkpt, sent_checkpt)
+    end
+
     local accuracy = test_SRL()
     print(accuracy)
 end

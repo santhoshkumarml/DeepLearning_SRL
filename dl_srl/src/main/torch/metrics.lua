@@ -108,9 +108,45 @@ end
 --p = m.embedding.lle(t, {dim=2, neighbors=3})  -- embed samples into a 2D plane, using 3 neighbor (LLE)
 
 --p = m.embedding.tsne(dataset, {dim=2, perplexity=30})  -- embed samples into a 2D plane, using tSNE
+function findKNNByGoogleWordVec(word, k)
+    local w2vutils = require 'w2vutils'
+    local k = 3
+    word_vec = w2vutils:word2vec(word)
+    neighbors = w2vutils:distance(word_vec, k)
+    w2vutils = nil
+    collectgarbage()
+    return neighbors
+end
 
-local w2vutils = require 'w2vutils'
-local k = 3
-hellorep = w2vutils:word2vec('Hello')
-neighbors = w2vutils:distance(hellorep, k)
 
+function findKNNAfterDomainAdaptation(word, k)
+    local word_dict = torch.load(DICTIONARY_FILE)
+    mlp = nn.CosineDistance()
+    x = word_dict[word]
+    h = Heap:new()
+    local knn = {}
+    while true do
+        local l = f:read()
+        if not l then break end
+        if l ~= 'when' and word_dict[l] ~= nil then
+            distance = mlp:forward({x, word_dict[l]})[1]
+            if h:size() < k then
+                h:push(l, distance)
+            else
+                word, min_dis = h:pop()
+                if min_dis < distance then
+                    h:push(l, distance)
+                else
+                    h:push(word, min_dis)
+                end
+            end
+        end
+    end
+    while not h:isempty() do table.insert(knn, h:pop()) end
+    return knn
+end
+
+local word = 'absorption'
+local k = 5
+print('Google Word Vec Neighbors', findKNNByGoogleWordVec(word, k))
+print('LM Word Vec Neighbors', findKNNByGoogleWordVec(word, k))
