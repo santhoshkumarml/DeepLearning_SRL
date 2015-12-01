@@ -41,7 +41,7 @@ function MyStochasticGradient:train(dataset, hookExample)
             module:accUpdateGradParameters(input, criterion.gradInput, currentLearningRate)
 
             if hookExample then
-                hookExample(self, shuffledIndices[t])
+                hookExample(shuffledIndices[t])
             end
         end
 
