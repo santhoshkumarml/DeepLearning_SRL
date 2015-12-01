@@ -23,7 +23,7 @@ local test_sent_start = 4413
 local test_sent_end = 4613
 
 
-global_net = {}
+local global_net = {}
 
 function init_nn(isLoad)
     local f = io.open(SRL_TEMPORAL_NET_FILE)
