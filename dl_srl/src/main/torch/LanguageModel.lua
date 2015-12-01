@@ -144,21 +144,22 @@ function trainAndUpdatedWordVec(epoch)
     	while true do
             local batch_train_data, words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
+            local word_dict = torch.load(DICTIONARY_FILE)
 
+            -- Closure function for editing word vector.
 	    	function editWordVec(batch_data_idx)
                 local word = words[batch_data_idx]
-                print('Editing word vec for word:', word)
-                local word_dict = torch.load(DICTIONARY_FILE)
                 local word_vec = word_dict[word]
                 local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
                 for idx = 1, WORD_VEC_SIZE do
                     word_vec[idx] = net.gradInput[gradIpOffset + idx]
+                    --word_vec[idx] = word_vec[idx] - net.gradInput[gradIpOffset + idx]
                 end
                 word_dict[word] = word_vec
-                torch.save(DICTIONARY_FILE, word_dict)
             end
-
+            
 			trainer:train(batch_train_data, editWordVec)
+            torch.save(DICTIONARY_FILE, word_dict)
         end
 
         -- no Need Already taken care in the callback
