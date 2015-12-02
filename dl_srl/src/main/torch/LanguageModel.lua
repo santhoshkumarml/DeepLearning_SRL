@@ -10,11 +10,11 @@ require 'Constants';
 require 'MyStochasticGradient';
 
 -- create/update and store word vectors for dictionary.
-function initOrUpdateWordVecForWordsInDict(netGradIp)
+function createOrLoadWordVecDict(isLoad)
     local w2vutils = require 'w2vutils'
     local f = io.open(WORDS_FILE_PATH)
     local word_dict = {}
-    if netGradIp then
+    if isLoad then
         word_dict = torch.load(DICTIONARY_FILE)
     end
     -- netGradIp will be WORD_VEC_SIZE * WINDOWS_SIZE
@@ -177,7 +177,7 @@ end
 --Main Function
 function main()
     doCleanup()
-    initOrUpdateWordVecForWordsInDict()
+    createOrLoadWordVecDict(true)
     collectgarbage()
     trainAndUpdatedWordVec(EPOCH)
 end
