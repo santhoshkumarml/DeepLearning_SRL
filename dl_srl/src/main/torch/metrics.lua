@@ -68,7 +68,7 @@ end
 function findKNNByGoogleWordVec(word, k)
     local w2vutils = require 'w2vutils'
     function googleWordVecHook(dict_word)
-        local word_vec = w2vutils:word2vec(word)
+        local word_vec = w2vutils:word2vec(dict_word)
         return word_vec
     end
     local knn = findTopKNeighbors(word, k, googleWordVecHook)
@@ -81,7 +81,7 @@ end
 function findKNNAfterDomainAdaptation(word, k)
     local word_dict = torch.load(DICTIONARY_FILE)
     function languageModelWordVecHook(dict_word)
-        local word_vec = word_dict[word]
+        local word_vec = word_dict[dict_word]
         return word_vec
     end
     local knn = findTopKNeighbors(word, k, languageModelWordVecHook)
