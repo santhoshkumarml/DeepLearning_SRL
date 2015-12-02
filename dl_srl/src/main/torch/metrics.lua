@@ -129,20 +129,22 @@ function findKNNAfterDomainAdaptation(word, k)
         if not l then break end
         if l ~= 'when' and word_dict[l] ~= nil then
             local distance = mlp:forward({x, word_dict[l]})[1]
-            print(distance)
             if h:size() < k then
                 h:push(l, distance)
             else
-                word, min_dis = h:pop()
+                local curr_word, min_dis = h:pop()
                 if min_dis < distance then
                     h:push(l, distance)
                 else
-                    h:push(word, min_dis)
+                    h:push(curr_word, min_dis)
                 end
             end
         end
     end
-    while not h:isempty() do table.insert(knn, h:pop()) end
+    while not h:isempty() do
+        local curr_word, min_dis = h:pop()
+        table.insert(knn, curr_word)
+    end
     return knn
 end
 
