@@ -149,4 +149,4 @@ end
 local word = 'absorption'
 local k = 5
 print('Google Word Vec Neighbors', findKNNByGoogleWordVec(word, k))
-print('LM Word Vec Neighbors', findKNNByGoogleWordVec(word, k))
+print('LM Word Vec Neighbors', findKNNAfterDomainAdaptation(word, k))
