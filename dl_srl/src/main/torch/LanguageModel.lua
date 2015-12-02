@@ -9,26 +9,22 @@ require 'nn';
 require 'Constants';
 require 'MyStochasticGradient';
 
+local word_dict = nil
+
 -- create/update and store word vectors for dictionary.
 function createOrLoadWordVecDict(isLoad)
     local w2vutils = require 'w2vutils'
     local f = io.open(WORDS_FILE_PATH)
-    local word_dict = {}
-
     if isLoad then
-        word_dict = torch.load(DICTIONARY_FILE)
+        local f1 = io.open(DICTIONARY_FILE)
+        if f1 ~= nil then
+            word_dict = torch.load(DICTIONARY_FILE)
+            f1:close()
+        end
     end
-    -- netGradIp will be WORD_VEC_SIZE * WINDOWS_SIZE
-    -- To update a single word we will need to just pick the gradient of weights For Middle word
-    -- (i.e ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) to ((WINDOW_SIZE/2) + 1)* WORD_VEC_SIZE) + WORD_VECSIZE)
-    -- and update the word vector by word_vec = word_vec - word_vec * (above gradWeights)
-    local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
     while true do
         local word = f:read()
         if not word then break end
-        local words = {}
-        table.insert(words, START)
-        table.insert(words, word)
         if not word_dict[word] then
             local google_vec = w2vutils:word2vec(word)
             if not google_vec then google_vec = torch.randn(WORD_VEC_SIZE) end
@@ -36,6 +32,7 @@ function createOrLoadWordVecDict(isLoad)
             word_dict[word] = google_vec
         end
     end
+    w2vutils = nil
     torch.save(DICTIONARY_FILE, word_dict)
 end
 
@@ -64,8 +61,6 @@ end
 function readBatchData(f)
 	local cnt_train_data = 1
 	local batch_train = {}
-	word_dict = torch.load(DICTIONARY_FILE)
-
     local words = {}
 
     while cnt_train_data <= BATCH_SIZE do
@@ -138,7 +133,6 @@ function trainAndUpdatedWordVec(epoch)
     	while true do
             local batch_train_data, words = readBatchData(f)
 	    	if batch_train_data:size() == 0 then break end
-            local word_dict = torch.load(DICTIONARY_FILE)
 
             -- Closure function for editing word vector.
 	    	function editWordVec(batch_data_idx)
@@ -147,12 +141,13 @@ function trainAndUpdatedWordVec(epoch)
                 local gradIpOffset = ((math.floor(WINDOW_SIZE / 2) + 1)* WORD_VEC_SIZE)
                 for idx = 1, WORD_VEC_SIZE do
                     word_vec[idx] = net.gradInput[gradIpOffset + idx]
-                    --word_vec[idx] = word_vec[idx] - net.gradInput[gradIpOffset + idx]
+                    --word_vec[idx] = word_vec[idx] - word_vec[idx] * net.gradInput[gradIpOffset + idx]
                 end
                 word_dict[word] = word_vec
             end
 
 			trainer:train(batch_train_data, editWordVec)
+
             torch.save(DICTIONARY_FILE, word_dict)
         end
 
