@@ -7,36 +7,6 @@ require 'nn';
 require 'Constants';
 require 'Heap';
 
-function formData()
-    --dictionary
-    local f = io.open(WORDS_FILE_PATH)
-
-    -- a dataset:
-    local word_dict = torch.load(DICTIONARY_FILE)
-
-    local dataset = nil
-    local widx = 1
-    local idx_words = {}
-    local words_idx = {}
-    while true do
-        local l = f:read()
-        if not l then break end
-        if word_dict[l] ~= nil then
-            idx_words[widx] = l
-            --words_idx[l] = widx
-            widx = widx + 1
-            word_vec = word_dict[l]:reshape(1, WORD_VEC_SIZE)
-            if dataset == nil then
-                dataset = word_vec
-            else
-                dataset = torch.cat(dataset, word_vec, 1)
-            end
-            word_dict[l] = nil
-        end
-    end
-    return dataset, idx_words
-end
-
 function plotWord2Vec(p)
     Plot = require 'itorch.Plot'
     -- scatter plots
@@ -58,48 +28,6 @@ function plotWord2Vec(p)
 
 end
 
-function findTopKNeighbors(k)
-    local word_dict = torch.load(DICTIONARY_FILE)
-    local f = io.open(WORDS_FILE_PATH)
-    mlp = nn.CosineDistance()
-    x = word_dict['when']
-    h = Heap:new()
-    while true do
-        local l = f:read()
-        if not l then break end
-        if l ~= 'when' and word_dict[l] ~= nil then
-            distance = mlp:forward({x, word_dict[l]})[1]
-            if h:size() < k then
-                h:push(l, distance)
-            else
-                word, min_dis = h:pop()
-                if min_dis < distance then
-                    h:push(l, distance)
-                else
-                    h:push(word, min_dis)
-                end
-            end
-        end
-    end
-    while not h:isempty() do print(h:pop()) end
-end
-
---ds = m.distances(dataset) -- return the matrix of distances (L2)
-function tryDistanceMetric()
-    local dataset, idx_words = formData()
-    ns = m.neighbors(dataset) -- return the matrix of neighbors for all samples (sorted)
-
-    for i = 1, 143 do
-        word = idx_words[i]
-        if word == 'when' then
-            print(word)
-            for j = 1, 10 do
-                idx = ns[i][j]
-                print(idx, idx_words[idx])
-            end
-        end
-    end
-end
 --ts = m.removeDuplicates(dataset) -- remove duplicates from dataset
 
 -- embeddings:
@@ -107,34 +35,24 @@ end
 --p = m.embedding.lle(t, {dim=2, neighbors=3})  -- embed samples into a 2D plane, using 3 neighbor (LLE)
 
 --p = m.embedding.tsne(dataset, {dim=2, perplexity=30})  -- embed samples into a 2D plane, using tSNE
-function findKNNByGoogleWordVec(word, k)
-    local w2vutils = require 'w2vutils'
-    word_vec = w2vutils:word2vec(word)
-    neighbors = w2vutils:distance(word_vec, k)
-    w2vutils = nil
-    collectgarbage()
-    return neighbors
-end
-
-
-function findKNNAfterDomainAdaptation(word, k)
-    local word_dict = torch.load(DICTIONARY_FILE)
+function findTopKNeighbors(word, hookWordVecLoader)
     local mlp = nn.CosineDistance()
-    local x = word_dict[word]
     local h = Heap:new()
     local f = io.open(WORDS_FILE_PATH)
+    local x = hookWordVecLoader(word)
     local knn = {}
     while true do
-        local l = f:read()
-        if not l then break end
-        if l ~= 'when' and word_dict[l] ~= nil then
-            local distance = mlp:forward({x, word_dict[l]})[1]
+        local neigh_word = f:read()
+        if not neigh_word then break end
+        local y = hookWordVecLoader(neigh_word)
+        if  y~= nil then
+            local distance = mlp:forward({x, y})[1]
             if h:size() < k then
-                h:push(l, distance)
+                h:push(neigh_word, distance)
             else
                 local curr_word, min_dis = h:pop()
                 if min_dis < distance then
-                    h:push(l, distance)
+                    h:push(neigh_word, distance)
                 else
                     h:push(curr_word, min_dis)
                 end
@@ -145,6 +63,28 @@ function findKNNAfterDomainAdaptation(word, k)
         local curr_word, min_dis = h:pop()
         table.insert(knn, curr_word)
     end
+    return knn
+end
+function findKNNByGoogleWordVec(word, k)
+    local w2vutils = require 'w2vutils'
+    function googleWordVecHook(dict_word)
+        local word_vec = w2vutils:word2vec(word)
+        return word_vec
+    end
+    local knn = findTopKNeighbors(word, googleWordVecHook)
+    w2vutils = nil
+    collectgarbage()
+    return knn
+end
+
+
+function findKNNAfterDomainAdaptation(word, k)
+    local word_dict = torch.load(DICTIONARY_FILE)
+    function languageModelWordVecHook(dict_word)
+        local word_vec = word_dict[word]
+        return word_vec
+    end
+    local knn = findTopKNeighbors(word, googleWordVecHook)
     return knn
 end
 
