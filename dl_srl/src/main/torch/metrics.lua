@@ -5,8 +5,7 @@
 require 'torch';
 require 'nn';
 require 'Constants';
-require 'Heap'
-m = require 'manifold'
+require 'Heap';
 
 function formData()
     --dictionary
@@ -110,7 +109,6 @@ end
 --p = m.embedding.tsne(dataset, {dim=2, perplexity=30})  -- embed samples into a 2D plane, using tSNE
 function findKNNByGoogleWordVec(word, k)
     local w2vutils = require 'w2vutils'
-    local k = 3
     word_vec = w2vutils:word2vec(word)
     neighbors = w2vutils:distance(word_vec, k)
     w2vutils = nil
@@ -121,15 +119,17 @@ end
 
 function findKNNAfterDomainAdaptation(word, k)
     local word_dict = torch.load(DICTIONARY_FILE)
-    mlp = nn.CosineDistance()
-    x = word_dict[word]
-    h = Heap:new()
+    local mlp = nn.CosineDistance()
+    local x = word_dict[word]
+    local h = Heap:new()
+    local f = io.open(WORDS_FILE_PATH)
     local knn = {}
     while true do
         local l = f:read()
         if not l then break end
         if l ~= 'when' and word_dict[l] ~= nil then
-            distance = mlp:forward({x, word_dict[l]})[1]
+            local distance = mlp:forward({x, word_dict[l]})[1]
+            print(distance)
             if h:size() < k then
                 h:push(l, distance)
             else
