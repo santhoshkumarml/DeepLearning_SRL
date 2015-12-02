@@ -84,7 +84,7 @@ function findKNNAfterDomainAdaptation(word, k)
         local word_vec = word_dict[word]
         return word_vec
     end
-    local knn = findTopKNeighbors(word, k, googleWordVecHook)
+    local knn = findTopKNeighbors(word, k, languageModelWordVecHook)
     return knn
 end
 
