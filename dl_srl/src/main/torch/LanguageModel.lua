@@ -14,6 +14,7 @@ function createOrLoadWordVecDict(isLoad)
     local w2vutils = require 'w2vutils'
     local f = io.open(WORDS_FILE_PATH)
     local word_dict = {}
+
     if isLoad then
         word_dict = torch.load(DICTIONARY_FILE)
     end
@@ -33,13 +34,6 @@ function createOrLoadWordVecDict(isLoad)
             if not google_vec then google_vec = torch.randn(WORD_VEC_SIZE) end
             google_vec = google_vec:narrow(1, 1, WORD_VEC_SIZE)
             word_dict[word] = google_vec
-        else
-            local word_vec = word_dict[word]
-            for idx = 1, WORD_VEC_SIZE do
-                --TODO:Check this again
-                word_vec[idx] = word_vec[idx] - word_vec[idx] * netGradIp[gradIpOffset + idx]
-            end
-            word_dict[word] = word_vec
         end
     end
     torch.save(DICTIONARY_FILE, word_dict)
