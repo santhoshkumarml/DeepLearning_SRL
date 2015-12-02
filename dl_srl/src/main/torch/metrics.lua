@@ -35,7 +35,7 @@ end
 --p = m.embedding.lle(t, {dim=2, neighbors=3})  -- embed samples into a 2D plane, using 3 neighbor (LLE)
 
 --p = m.embedding.tsne(dataset, {dim=2, perplexity=30})  -- embed samples into a 2D plane, using tSNE
-function findTopKNeighbors(word, hookWordVecLoader)
+function findTopKNeighbors(word, k, hookWordVecLoader)
     local mlp = nn.CosineDistance()
     local h = Heap:new()
     local f = io.open(WORDS_FILE_PATH)
@@ -71,7 +71,7 @@ function findKNNByGoogleWordVec(word, k)
         local word_vec = w2vutils:word2vec(word)
         return word_vec
     end
-    local knn = findTopKNeighbors(word, googleWordVecHook)
+    local knn = findTopKNeighbors(word, k, googleWordVecHook)
     w2vutils = nil
     collectgarbage()
     return knn
@@ -84,7 +84,7 @@ function findKNNAfterDomainAdaptation(word, k)
         local word_vec = word_dict[word]
         return word_vec
     end
-    local knn = findTopKNeighbors(word, googleWordVecHook)
+    local knn = findTopKNeighbors(word, k, googleWordVecHook)
     return knn
 end
 
