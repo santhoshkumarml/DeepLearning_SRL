@@ -203,7 +203,7 @@ function test_SRL()
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
     local accuracy, total_ins = 0, 0
-    
+
     if test_sent_end == -1 then return -1 end
 
     for sent_num = 1, test_sent_start - 1 do
