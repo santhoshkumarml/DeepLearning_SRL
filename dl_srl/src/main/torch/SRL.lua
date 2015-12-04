@@ -255,7 +255,7 @@ end
 
 --Main Function
 function main()
-   doCleanup()
+    doCleanup()
 
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
