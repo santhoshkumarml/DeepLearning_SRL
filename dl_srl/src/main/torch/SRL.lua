@@ -26,7 +26,7 @@ local global_net = {}
 
 function init_nn(isLoad)
     local f = io.open(SRL_TEMPORAL_NET_FILE)
-    if isLoad and f~=nil then
+    if isLoad and f ~= nil then
         global_net = torch.load(SRL_TEMPORAL_NET_FILE)
         if f~=nil then f:close() end
         print('Net Loaded')
@@ -104,6 +104,49 @@ function trainForSingleInstance(train_data)
     trainer:train(train_data)
 end
 
+
+--Find the class number from the LogSoftMax final layer
+function findClasNumFromProbs(probs)
+    local probs = probs[1]
+    local size = probs:size(1)
+    local max_prob, max_index = -4000, -1
+    for index = 1, size do
+        local curr_prob = probs[index]
+        if curr_prob > max_prob then
+            max_prob = curr_prob
+            max_index = index
+        end
+    end
+    return max_index
+end
+
+--Construct Feature Vector instance
+function constructFeatureVecForSentence(predicate_idx, widx1, words)
+    local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
+            + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
+    for widx2 = 1, #words do
+        local curr_word = words[widx2]
+        local feature_vec_for_word = w2vutils:word2vec(curr_word)
+        if not feature_vec_for_word then
+            feature_vec_for_word = UNK
+            --print('Word Vec not known for', curr_word)
+        else
+            feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
+        end
+
+        --Convert distance to binary tensor and append it to word vector
+        local distance_to_word_of_interest = intToBin(widx1 - widx2)
+        local distance_to_predicate = intToBin(predicate_idx - widx2)
+        local feature_vec = torch.cat(
+            torch.cat(feature_vec_for_word, distance_to_word_of_interest),
+            distance_to_predicate)
+        distance_to_predicate:free()
+        distance_to_word_of_interest:free()
+        feature_vecs_for_sent[widx2 + 1] = feature_vec
+    end
+    return feature_vecs_for_sent
+end
+
 --Train for sentences
 function train(epoch, epoch_checkpt, sent_checkpt)
     if train_sent_end == -1 then return -1 end
@@ -128,33 +171,15 @@ function train(epoch, epoch_checkpt, sent_checkpt)
             print('Processing the sentence', sent_num)
             for widx1 = 1, #words do
                 local word_of_interest, current_arg = words[widx1], args[widx1]
-                local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
-                        + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
-                for widx2 = 1, #words do
-                    local curr_word = words[widx2]
-                    local feature_vec_for_word = w2vutils:word2vec(curr_word)
-                    if not feature_vec_for_word then
-                        feature_vec_for_word = UNK
-                        --print('Word Vec not known for', curr_word)
-                    else
-                        feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
-                    end
 
-                    --Convert distance to binary tensor and append it to word vector
-                    local distance_to_word_of_interest = intToBin(widx1 - widx2)
-                    local distance_to_predicate = intToBin(predicate_idx - widx2)
-                    local feature_vec = torch.cat(
-                        torch.cat(feature_vec_for_word, distance_to_word_of_interest),
-                        distance_to_predicate)
-                    distance_to_predicate:free()
-                    distance_to_word_of_interest:free()
-                    feature_vecs_for_sent[widx2 + 1] = feature_vec
-                end
+                local feature_vecs_for_sent = constructFeatureVecForSentence(predicate_idx,
+                    widx1, words)
 
                 local curr_target = arg_to_class_dict[current_arg]
                 local train_data = {}
-                train_data[1] = {feature_vecs_for_sent, curr_target}
+                train_data[1] = {feature_vecs_for_sent, curr_target }
                 function train_data:size() return 1 end
+
                 trainForSingleInstance(train_data)
                 feature_vecs_for_sent:free()
             end
@@ -165,7 +190,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 current_run = 0
             else current_run = current_run + 1 end
         else
-            print('Skipped Processing Sentence:',sent_num, 'Epoch:', epoch)
+            print('Skipped Processing Sentence:', sent_num, 'Epoch:', epoch)
         end
     end
     save_nn()
@@ -173,21 +198,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
     print('------------------------------------------------------------------------------------------')
 end
 
-function findClasNumFromProbs(probs)
-    local probs = probs[1]
-    local size = probs:size(1)
-    local max_prob, max_index = -4000, -1
-    for index = 1, size do
-        local curr_prob = probs[index]
-        if curr_prob > max_prob then
-            max_prob = curr_prob
-            max_index = index
-        end
-    end
-    return max_index
-end
-
-
+--Run Test Set
 function test_SRL()
     local arg_ds = torch.load(ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
@@ -199,37 +210,16 @@ function test_SRL()
     end
 
     for sent_num = test_sent_start, test_sent_end do
+        print('Processing the sentence', sent_num)
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        print('Processing the sentence', sent_num)
         for widx1 = 1, #words do
             local word_of_interest, current_arg = words[widx1], args[widx1]
-            local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
-                    + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
-            for widx2 = 1, #words do
-                local curr_word = words[widx2]
-                local feature_vec_for_word = w2vutils:word2vec(curr_word)
-                if not feature_vec_for_word then
-                    feature_vec_for_word = UNK
-                    --print('Word Vec not known for', curr_word)
-                else
-                    feature_vec_for_word = feature_vec_for_word:narrow(1, 1, WORD_VEC_SIZE)
-                end
-
-                --Convert distance to binary tensor and append it to word vector
-                local distance_to_word_of_interest = intToBin(widx1 - widx2)
-                local distance_to_predicate = intToBin(predicate_idx - widx2)
-                local feature_vec = torch.cat(
-                    torch.cat(feature_vec_for_word, distance_to_word_of_interest),
-                    distance_to_predicate)
-                distance_to_predicate:free()
-                distance_to_word_of_interest:free()
-                feature_vecs_for_sent[widx2 + 1] = feature_vec
-            end
+            local feature_vecs_for_sent = constructFeatureVecForSentence(predicate_idx,
+                widx1, words)
 
             local real_target = arg_to_class_dict[current_arg]
-
             update_nn_for_sentence(feature_vecs_for_sent)
 
             local logProbs = global_net:forward(feature_vecs_for_sent)
@@ -249,7 +239,7 @@ end
 function loadCheckPt()
     local checkPt = {1, 0}
     local f = io.open(SRL_CHECKPT_FILE)
-    if f~=nil then
+    if f ~= nil then
         checkPt = torch.load(SRL_CHECKPT_FILE)
         f:close()
     end
