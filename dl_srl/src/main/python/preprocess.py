@@ -2,6 +2,7 @@ import random
 from collections import deque
 
 import nltk
+import Constants
 
 from Constants import data_file_path,\
     op_data_file_path,\
@@ -9,7 +10,7 @@ from Constants import data_file_path,\
     diction_file_path, WINDOW_SIZE, MID, START, \
     END, UNK
 
-
+nltk.data.path.append(Constants.NLTK_DATA_PATH)
 #number of lines processed locally = 128170:The Tang capital of Chang'an ( today 's Xi'an ) became an important center for Buddhist thought .
 
 def makeWindowAndTrainingData(diction):
