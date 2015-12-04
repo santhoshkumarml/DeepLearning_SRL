@@ -121,11 +121,11 @@ function findClasNumFromProbs(probs)
 end
 
 --Construct Feature Vector instance
-function constructFeatureVecForSentence(predicate_idx, widx1, words)
+function constructFeatureVecForSentence(predicate_idx, word_of_interest_idx, words)
     local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
             + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM):fill(0)
-    for widx2 = 1, #words do
-        local curr_word = words[widx2]
+    for widx = 1, #words do
+        local curr_word = words[widx]
         local feature_vec_for_word = w2vutils:word2vec(curr_word)
         if not feature_vec_for_word then
             feature_vec_for_word = UNK
@@ -135,14 +135,14 @@ function constructFeatureVecForSentence(predicate_idx, widx1, words)
         end
 
         --Convert distance to binary tensor and append it to word vector
-        local distance_to_word_of_interest = intToBin(widx1 - widx2)
-        local distance_to_predicate = intToBin(predicate_idx - widx2)
+        local distance_to_word_of_interest = intToBin(word_of_interest_idx - widx)
+        local distance_to_predicate = intToBin(predicate_idx - widx)
         local feature_vec = torch.cat(
             torch.cat(feature_vec_for_word, distance_to_word_of_interest),
             distance_to_predicate)
         distance_to_predicate:free()
         distance_to_word_of_interest:free()
-        feature_vecs_for_sent[widx2 + 1] = feature_vec
+        feature_vecs_for_sent[widx + 1] = feature_vec
     end
     return feature_vecs_for_sent
 end
@@ -156,7 +156,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
     local arg_ds = torch.load(ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
-    local current_run = 0
+    local checkpt_ctr = 0
 
     for sent_num = 1, train_sent_start - 1 do
         local predicate_idx, words, args = f:read(), f:read(), f:read()
@@ -169,11 +169,11 @@ function train(epoch, epoch_checkpt, sent_checkpt)
         if epoch > epoch_checkpt or sent_num > sent_checkpt then
             collectgarbage()
             print('Processing the sentence', sent_num)
-            for widx1 = 1, #words do
-                local word_of_interest, current_arg = words[widx1], args[widx1]
+            for word_of_interest_idx = 1, #words do
+                local word_of_interest, current_arg = words[word_of_interest_idx], args[word_of_interest_idx]
 
                 local feature_vecs_for_sent = constructFeatureVecForSentence(predicate_idx,
-                    widx1, words)
+                    word_of_interest_idx, words)
 
                 local curr_target = arg_to_class_dict[current_arg]
                 local train_data = {}
@@ -183,12 +183,11 @@ function train(epoch, epoch_checkpt, sent_checkpt)
                 trainForSingleInstance(train_data)
                 feature_vecs_for_sent:free()
             end
-            if current_run == 25 then
+            if checkpt_ctr % 25 == 0 then
                 save_nn()
-                local checkPt = {epoch, sent_num}
-                torch.save(SRL_CHECKPT_FILE, checkPt)
-                current_run = 0
-            else current_run = current_run + 1 end
+                torch.save(SRL_CHECKPT_FILE, {epoch, sent_num})
+            end
+            checkpt_ctr = checkpt_ctr + 1
         else
             print('Skipped Processing Sentence:', sent_num, 'Epoch:', epoch)
         end
@@ -204,7 +203,9 @@ function test_SRL()
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
     local accuracy, total_ins = 0, 0
+    
     if test_sent_end == -1 then return -1 end
+
     for sent_num = 1, test_sent_start - 1 do
         local predicate_idx, words, args = f:read(), f:read(), f:read()
     end
@@ -214,10 +215,10 @@ function test_SRL()
         local predicate_idx = tonumber(f:read())
         local words = string.split(f:read(), " ")
         local args = string.split(f:read(), " ")
-        for widx1 = 1, #words do
-            local word_of_interest, current_arg = words[widx1], args[widx1]
+        for word_of_interest_idx = 1, #words do
+            local word_of_interest, current_arg = words[word_of_interest_idx], args[word_of_interest_idx]
             local feature_vecs_for_sent = constructFeatureVecForSentence(predicate_idx,
-                widx1, words)
+                word_of_interest_idx, words)
 
             local real_target = arg_to_class_dict[current_arg]
             update_nn_for_sentence(feature_vecs_for_sent)

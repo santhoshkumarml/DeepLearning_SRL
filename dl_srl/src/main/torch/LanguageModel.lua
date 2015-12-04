@@ -150,10 +150,6 @@ function trainAndUpdatedWordVec(epoch)
 
             torch.save(DICTIONARY_FILE, word_dict)
         end
-
-        -- no Need Already taken care in the callback
-        -- Update Word Vector and the network
-        --initOrUpdateWordVecForWordsInDict(net.gradInput)
         torch.save(LANGUAGE_NET_FILE, net)
     end
 end
