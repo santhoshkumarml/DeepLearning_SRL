@@ -15,6 +15,9 @@ LANGUAGE_NET_FILE = "../resources/language_model.net"
 SRL_TEMPORAL_NET_FILE = "../resources/srl_temporal.net"
 SRL_CHECKPT_FILE = "../resources/srl_checpt.t7"
 
+NEW_DOMAIN_SRL_TEMPORAL_NET_FILE = "../resources/srl_temporal_new_domain.net"
+NEW_DOMAIN_SRL_CHECKPT_FILE = "../resources/srl_checpt_new_domain.t7"
+
 GOOGLE_PRETRAINED_WORD2_VEC_FILE = '/media/santhosh/Data/workspace/nlp_project/'..
         'SRL/word2vec/GoogleNews-vectors-negative300.bin'
 
@@ -44,6 +47,9 @@ FINISH = "$END$"
 
 ARGS_FILE = '../resources/args.txt'
 ARGS_DICT_FILE = '../resources/args.t7'
+NEW_DOMAIN_ARGS_FILE = '../resources/args_new_domain.txt'
+NEW_DOMAIN_ARGS_DICT_FILE = '../resources/args_new_domain.t7'
 
 SRL_TRAIN_FILE = '../resources/SRL_train.txt'
 
+NEW_DOMAIN_SRL_TRAIN_FILE = '../resources/SRL_train_new_domain.txt'

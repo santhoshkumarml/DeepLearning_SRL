@@ -1,7 +1,8 @@
 --
 -- User: santhosh
--- Date: 11/2/15
+-- Date: 12/5/15
 --
+
 require 'Constants'
 require 'torch'
 require 'nn'
@@ -12,46 +13,45 @@ local ksz = 3
 local convOutputFrame = 100
 local HUs = 100
 --Later loaded to number of argument classes
-local final_output_layer_size = -1
+local old_domain_final_output_layer_size = -1
+local new_domain_final_output_layer_size = -1
 local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
 local train_sent_start = 1
-local train_sent_end = 300
+local train_sent_end = 1200
 
-local test_sent_start = 2550
-local test_sent_end = 2570
+local test_sent_start = 1200
+local test_sent_end = 1400
 
 
-local global_net = {}
+local domain_global_net = {}
 
 function init_nn(isLoad)
-    local f = io.open(SRL_TEMPORAL_NET_FILE)
-    if isLoad and f ~= nil then
-        global_net = torch.load(SRL_TEMPORAL_NET_FILE)
-        if f~=nil then f:close() end
+    local old_f = io.open(SRL_TEMPORAL_NET_FILE)
+    if not old_f then error('Old Domain SRL Net should be present') end
+    local new_f = io.open(NEW_DOMAIN_SRL_TEMPORAL_NET_FILE)
+    if isLoad and new_f ~= nil then
+        domain_global_net = torch.load(NEW_DOMAIN_SRL_TEMPORAL_NET_FILE)
+        if new_f~=nil then new_f:close() end
         print('Net Loaded')
     else
-        global_net = nn.Sequential()
-        global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
-                + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
-            convOutputFrame, ksz))
-        --    lolca sentence_size = sentence_size - (2 * math.floor(ksz/2))
-        global_net:add(nn.TemporalMaxPooling(1))
-        global_net:add(nn.Tanh())
-        global_net:add(nn.Linear(HUs, final_output_layer_size))
-        global_net:add(nn.LogSoftMax())
+        domain_global_net = torch.load(SRL_TEMPORAL_NET_FILE)
+        --Add a new linear layer after exisisting nn.Linear
+        domain_global_net:insert(nn.Linear(old_domain_final_output_layer_size,
+            new_domain_final_output_layer_size), 4)
     end
+    old_f:close()
 end
 
 function update_nn_for_sentence(sentence)
     local sentence_size = sentence:size(1)
     sentence_size = sentence_size - (2 * math.floor(ksz/2))
-    global_net.modules[2] = nn.TemporalMaxPooling(sentence_size)
+    domain_global_net.modules[2] = nn.TemporalMaxPooling(sentence_size)
 end
 
 --Serialize the neural net
 function save_nn()
-    torch.save(SRL_TEMPORAL_NET_FILE, global_net)
+    torch.save(SRL_TEMPORAL_NET_FILE, domain_global_net)
 end
 
 
@@ -73,11 +73,8 @@ function intToBin(num)
     if isNeg then tensor[1] = 1 else tensor[1] = 0 end
     return tensor
 end
-
-
---Read Arguments dictionary and generate class number for them starting with 1
-function makeArgToClassDict()
-    local f = io.open(ARGS_FILE)
+function makeArgToClassDict(argsFile, argsDictFile)
+    local f = io.open(argsFile)
     local args = string.split(f:read(), ",")
     local arg_ds = {}
     local arg_to_class_dict, class_to_arg_dict = {}, {}
@@ -87,18 +84,27 @@ function makeArgToClassDict()
     end
     arg_ds[1] = arg_to_class_dict
     arg_ds[2] = class_to_arg_dict
-    torch.save(ARGS_DICT_FILE, {arg_to_class_dict, class_to_arg_dict})
+    torch.save(argsDictFile, {arg_to_class_dict, class_to_arg_dict})
     f:close()
     return #args
 end
 
+--Read Old Domain Arguments dictionary and generate class number for them starting with 1
+function makeArgToClassDictOldDomain()
+    return makeArgToClassDict(ARGS_FILE, ARGS_DICT_FILE)
+end
+
+--Read New Domain Arguments dictionary and generate class number for them starting with 1
+function makeArgToClassDictNewDomain()
+    return makeArgToClassDict(NEW_DOMAIN_ARGS_FILE, NEW_DOMAIN_ARGS_DICT_FILE)
+end
 
 --Train on an instance of sentences with a specific word of interest.
 function trainForSingleInstance(train_data)
     local sentence = train_data[1][1]
     update_nn_for_sentence(sentence)
     local criterion = nn.ClassNLLCriterion()
-    local trainer = nn.StochasticGradient(global_net, criterion)
+    local trainer = nn.StochasticGradient(domain_global_net, criterion)
     trainer.learningRate = 0.01
     trainer.maxIteration = 1
     trainer:train(train_data)
@@ -153,9 +159,9 @@ function train(epoch, epoch_checkpt, sent_checkpt)
 
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
     -- load data structures for class_to_arg_name conversion and arg_name_to_class conversion
-    local arg_ds = torch.load(ARGS_DICT_FILE)
+    local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
-    local f = io.open(SRL_TRAIN_FILE)
+    local f = io.open(NEW_DOMAIN_SRL_TRAIN_FILE)
     local checkpt_ctr = 0
 
     for sent_num = 1, train_sent_start - 1 do
@@ -185,7 +191,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
             end
             if checkpt_ctr % 25 == 0 then
                 save_nn()
-                torch.save(SRL_CHECKPT_FILE, {epoch, sent_num})
+                torch.save(NEW_DOMAIN_SRL_CHECKPT_FILE, {epoch, sent_num})
             end
             checkpt_ctr = checkpt_ctr + 1
         else
@@ -199,7 +205,7 @@ end
 
 --Run Test Set
 function test_SRL()
-    local arg_ds = torch.load(ARGS_DICT_FILE)
+    local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
     local accuracy, total_ins = 0, 0
@@ -223,7 +229,7 @@ function test_SRL()
             local real_target = arg_to_class_dict[current_arg]
             update_nn_for_sentence(feature_vecs_for_sent)
 
-            local logProbs = global_net:forward(feature_vecs_for_sent)
+            local logProbs = domain_global_net:forward(feature_vecs_for_sent)
             local probs = torch.exp(logProbs)
             local pred_target = findClasNumFromProbs(probs)
 
@@ -241,7 +247,7 @@ function loadCheckPt()
     local checkPt = {1, 0}
     local f = io.open(SRL_CHECKPT_FILE)
     if f ~= nil then
-        checkPt = torch.load(SRL_CHECKPT_FILE)
+        checkPt = torch.load(NEW_DOMAIN_SRL_CHECKPT_FILE)
         f:close()
     end
     return checkPt
@@ -250,8 +256,8 @@ end
 
 -- Remove the serialized nets
 function doCleanup()
-    os.remove(SRL_TEMPORAL_NET_FILE)
-    os.remove(SRL_CHECKPT_FILE)
+    os.remove(NEW_DOMAIN_SRL_TEMPORAL_NET_FILE)
+    os.remove(NEW_DOMAIN_SRL_CHECKPT_FILE)
 end
 
 --Main Function
@@ -259,7 +265,8 @@ function main()
     --doCleanup()
 
     --Number of different argument classes
-    final_output_layer_size = makeArgToClassDict()
+    old_domain_final_output_layer_size = makeArgToClassDictOldDomain()
+    new_domain_final_output_layer_size = makeArgToClassDictNewDomain()
     init_nn(true)
 
     local checkPt = loadCheckPt()
@@ -274,3 +281,5 @@ function main()
 end
 
 main()
+
+
