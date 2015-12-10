@@ -18,10 +18,10 @@ SRL_CHECKPT_FILE = "../resources/srl_checpt.t7"
 NEW_DOMAIN_SRL_TEMPORAL_NET_FILE = "../resources/srl_temporal_new_domain.net"
 NEW_DOMAIN_SRL_CHECKPT_FILE = "../resources/srl_checpt_new_domain.t7"
 
-GOOGLE_PRETRAINED_WORD2_VEC_FILE = '/media/santhosh/Data/workspace/nlp_project/'..
+GOOGLE_PRETRAINED_WORD2_VEC_FILE = '/home/smanavas/data/nlp_project/'..
         'SRL/word2vec/GoogleNews-vectors-negative300.bin'
 
-GOOGLE_WORD2VEC_OUTPUT_FILE_NAME = '/media/santhosh/Data/workspace/nlp_project/SRL/word2vec/word2vec.t7'
+GOOGLE_WORD2VEC_OUTPUT_FILE_NAME = '/home/smanavas/data/nlp_project/SRL/word2vec/word2vec.t7'
 
 WORD2VEC = {
     binfilename = GOOGLE_PRETRAINED_WORD2_VEC_FILE,

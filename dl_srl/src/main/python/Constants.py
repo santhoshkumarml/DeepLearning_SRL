@@ -1,8 +1,8 @@
 import os
 import nltk
 
-NLTK_DATA_PATH = '/media/santhosh/Data/workspace/nltk_data/'
-rsrc_path = os.path.join('/home/santhosh/workspaces/DeepLearning_SRL/dl_srl', 'src/main/resources')
+NLTK_DATA_PATH = '/home/smanavas/data/nltk_data/'
+rsrc_path = os.path.join('/home/smanavas/ws/DeepLearning_SRL/dl_srl', 'src/main/resources')
 data_file_path = os.path.join(rsrc_path, 'small_wikipedia2text-extracted.txt')
 op_data_file_path = os.path.join(rsrc_path, 'data.txt')
 train_file_path = os.path.join(rsrc_path, 'train_data.txt')

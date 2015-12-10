@@ -53,7 +53,7 @@ function MyStochasticGradient:train(dataset, hookExample)
 
         iteration = iteration + 1
         currentLearningRate = self.learningRate/(1+iteration*self.learningRateDecay)
-        if self.maxIteration > 0 and iteration > self.maxIteration then
+        if self.maxIteration > 0 and iteration > self.maxIteration and self.verbose then
             print("# My StochasticGradient - training error = " .. currentError)
             break
         end
