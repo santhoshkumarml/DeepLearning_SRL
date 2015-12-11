@@ -1,4 +1,4 @@
-# DeepLearning Semantic Role Labeling
+# Semantic Role Labeling using DeepLearning
 This is a deep learning architecture system which can do:
   - Language Modeling
   - Semantic Role Labeling
