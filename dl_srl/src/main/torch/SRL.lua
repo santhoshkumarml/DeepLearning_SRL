@@ -15,14 +15,8 @@ local HUs = 100
 local final_output_layer_size = -1
 local UNK = torch.Tensor(WORD_VEC_SIZE):fill(0)
 
-local train_sent_start = 1
-local train_sent_end = 300
-
-local test_sent_start = 2550
-local test_sent_end = 2570
-
-
 local global_net = {}
+local trainer = nil
 
 function init_nn(isLoad)
     local f = io.open(SRL_TEMPORAL_NET_FILE)
@@ -35,12 +29,18 @@ function init_nn(isLoad)
         global_net:add(nn.TemporalConvolution(WORD_VEC_SIZE
                 + SRL_WORD_INTEREST_DIST_DIM + SRL_VERB_DIST_DIM,
             convOutputFrame, ksz))
-        --    lolca sentence_size = sentence_size - (2 * math.floor(ksz/2))
+        -- local sentence_size = sentence_size - (2 * math.floor(ksz/2))
         global_net:add(nn.TemporalMaxPooling(1))
         global_net:add(nn.Tanh())
         global_net:add(nn.Linear(HUs, final_output_layer_size))
+        global_net:add(nn.Tanh())
         global_net:add(nn.LogSoftMax())
     end
+    local criterion = nn.ClassNLLCriterion()
+    trainer = nn.StochasticGradient(global_net, criterion)
+    trainer.maxIteration = 1
+    trainer.verbose = false
+    trainer.learningRate = 0.01
 end
 
 function update_nn_for_sentence(sentence)
@@ -97,10 +97,6 @@ end
 function trainForSingleInstance(train_data)
     local sentence = train_data[1][1]
     update_nn_for_sentence(sentence)
-    local criterion = nn.ClassNLLCriterion()
-    local trainer = nn.StochasticGradient(global_net, criterion)
-    trainer.learningRate = 0.01
-    trainer.maxIteration = 1
     trainer:train(train_data)
 end
 
@@ -148,7 +144,7 @@ function constructFeatureVecForSentence(predicate_idx, word_of_interest_idx, wor
 end
 
 --Train for sentences
-function train(epoch, epoch_checkpt, sent_checkpt)
+function train(epoch, epoch_checkpt, sent_checkpt, train_sent_start, train_sent_end)
     if train_sent_end == -1 then return -1 end
 
     print('--------------------------Train iteration number:'..epoch..'----------------------------------------')
@@ -198,7 +194,7 @@ function train(epoch, epoch_checkpt, sent_checkpt)
 end
 
 --Run Test Set
-function test_SRL()
+function test_SRL(test_sent_start, test_sent_end)
     local arg_ds = torch.load(ARGS_DICT_FILE)
     local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
     local f = io.open(SRL_TRAIN_FILE)
@@ -255,22 +251,39 @@ function doCleanup()
 end
 
 --Main Function
-function main()
-    --doCleanup()
-
+function doSRL(isTrain, ins_start, ins_end)
     --Number of different argument classes
     final_output_layer_size = makeArgToClassDict()
     init_nn(true)
 
     local checkPt = loadCheckPt()
     local epoch_checkpt, sent_checkpt = checkPt[1], checkPt[2]
-
-    for epoch = epoch_checkpt, EPOCH do
-        train(epoch, epoch_checkpt, sent_checkpt)
+    if isTrain then 
+      for epoch = epoch_checkpt, EPOCH do
+          train(epoch, epoch_checkpt, sent_checkpt)
+      end
+    else
+      local accuracy = test_SRL()
+      print('Overall Test Accuracy:', accuracy)
     end
-
-    local accuracy = test_SRL()
-    print(accuracy)
 end
 
-main()
+
+if (#arg < 3) then
+  error("Not Enough Arguments, Usage: th SRL.lua \"train/test\" sent_start sent_end [clean]") 
+end
+
+local ins_start, ins_end = arg[2], arg[3]
+
+local isCleanExistingNet = false
+
+if #arg == 4 and arg[4] == 'clean' then 
+  isCleanExistingNet = true
+  doCleanup()
+end
+
+if arg[1] == "train" then 
+  doSRL(true, ins_start, ins_end)
+else
+  doSRL(false, ins_start, ins_end)
+end
