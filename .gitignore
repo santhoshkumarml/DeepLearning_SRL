@@ -6,6 +6,7 @@ target/
 .pydevproject
 .settings/
 .idea/
+.metadata/
 .pyc
 dl_srl/src/main/torch/*.html
 dl_srl/src/main/resources/*data.txt
