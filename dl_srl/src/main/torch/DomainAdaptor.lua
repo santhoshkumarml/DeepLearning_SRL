@@ -39,7 +39,7 @@ function init_nn(isLoadNewDomainNet)
     print(tostring(domain_global_net))
   end
   old_f:close()
-  
+
   local criterion = nn.ClassNLLCriterion()
   trainer = nn.StochasticGradient(domain_global_net, criterion)
   trainer.verbose = false
@@ -127,6 +127,49 @@ function findClasNumFromProbs(probs)
   return max_index
 end
 
+--Create And Get Confusion Matrix
+function creatConfusionMatrix()
+  local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
+  local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
+  local confusion_matrix = {}
+  for arg1, cl1 in ipairs(arg_to_class_dict) do
+    table.insert(confusionMatrix, arg1, {})
+    for arg2, cl2 in ipairs(arg_to_class_dict) do
+      table.insert(confusionMatrix[arg1], arg2, 0.0)
+    end
+  end
+end
+
+function updateConfusionMatrix(confusion_matrix, real_arg, predicted_arg)
+  confusion_matrix[real_arg][predicted_arg] = confusion_matrix[real_arg][predicted_arg] + 1.0
+end
+
+function calculatePrecisionRecallF1(confusion_matrix)
+  local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
+  local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
+  local precision, recall = {}, {}
+  for arg1, cl1 in ipairs(arg_to_class_dict) do
+    local tp = confusion_matrix[arg1][arg1]
+    local tpfp = 0.0
+    for arg2, cl1 in ipairs(arg_to_class_dict) do
+      tpfp = tpfp + confusion_matrix[arg2][arg1]
+    end
+    precision[arg1] = tp / tpfp
+  end
+  for arg1, cl1 in ipairs(arg_to_class_dict) do
+    local tp = confusion_matrix[arg1][arg1]
+    local tpfn = 0.0
+    for arg2, cl1 in ipairs(arg_to_class_dict) do
+      tpfn = tpfn + confusion_matrix[arg1][arg2]
+    end
+    recall[arg1] = tp / tpfn
+  end
+  for arg, cl in ipairs(arg_to_class_dict) do
+    print('Class:', arg, 'Precision:', precision[arg], 'Recall:', recall[arg],
+    'F1:', (2 * precision[arg] * recall[arg]) / (precision[arg] + recall[arg]))
+  end
+end
+
 --Construct Feature Vector instance
 function constructFeatureVecForSentence(predicate_idx, word_of_interest_idx, words)
   local feature_vecs_for_sent = torch.Tensor(#words + 2, WORD_VEC_SIZE
@@ -194,7 +237,7 @@ function train(epoch, epoch_checkpt, sent_checkpt, train_sent_start, train_sent_
           trainForSingleInstance(train_data)
           feature_vecs_for_sent:free()
           if(curr_target == 5) then
-            count = count +1 
+            count = count +1
           end
         end
       end
@@ -213,20 +256,13 @@ function train(epoch, epoch_checkpt, sent_checkpt, train_sent_start, train_sent_
 end
 
 
-
 --Run Test Set
 function test_SRL(test_sent_start, test_sent)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local f = io.open(NEW_DOMAIN_SRL_TRAIN_FILE)
-  local accuracy = {}
-  local total_ins = {} 
-  for i = 1, 5 do
-    accuracy[i] = 0
-    total_ins[i] = 0
-  end
-
   if test_sent_end == -1 then return -1 end
+  local confusion_matrix = creatConfusionMatrix()
 
   for sent_num = 1, test_sent_start - 1 do
     local predicate_idx, words, args = f:read(), f:read(), f:read()
@@ -249,23 +285,11 @@ function test_SRL(test_sent_start, test_sent)
       local probs = torch.exp(logProbs)
       local pred_target = findClasNumFromProbs(probs)
 
-      if real_target == pred_target then accuracy[real_target] = accuracy[real_target] +1 end
-      total_ins[real_target] = total_ins[real_target] + 1
+      updateConfusionMatrix(confusion_matrix, current_arg, class_to_arg_dict[pred_target])
       feature_vecs_for_sent:free()
     end
   end
-
-  local accuracyT = 0
-  local total_insT = 0
-  for i = 1, 5 do
-    print('accuracy'..tostring(i), 'predicted= ', accuracy[i], ' targeted = ', total_ins[i],
-     "accuracy ", accuracy[i]/total_ins[i])
-    accuracyT = accuracyT + accuracy[i]
-    total_insT = total_insT + total_ins[i]
-  end
-
-  accuracyT = accuracyT / total_insT
-  return accuracyT
+  calculatePrecisionRecallF1(confusion_matrix)
 end
 
 function loadCheckPt()
@@ -298,7 +322,7 @@ function domain_adapt(isTrain, ins_start, ins_end)
   print('Epoch Check Point', epoch_checkpt)
   w2vutils = require 'w2vutils'
 
-  if isTrain then 
+  if isTrain then
     for epoch = epoch_checkpt, EPOCH do
       train(epoch, epoch_checkpt, sent_checkpt, ins_start, ins_end)
     end
@@ -309,19 +333,19 @@ function domain_adapt(isTrain, ins_start, ins_end)
 end
 
 if (#arg < 3) then
-  error("Not Enough Arguments, Usage: th DomainAdaptor.lua \"train/test\" sent_start sent_end [clean]") 
+  error("Not Enough Arguments, Usage: th DomainAdaptor.lua \"train/test\" sent_start sent_end [clean]")
 end
 
 local ins_start, ins_end = arg[2], arg[3]
 
 local isCleanExistingNet = false
 
-if #arg == 4 and arg[4] == 'clean' then 
+if #arg == 4 and arg[4] == 'clean' then
   isCleanExistingNet = true
   doCleanup()
 end
 
-if arg[1] == "train" then 
+if arg[1] == "train" then
   domain_adapt(true, ins_start, ins_end)
 else
   domain_adapt(false, ins_start, ins_end)
