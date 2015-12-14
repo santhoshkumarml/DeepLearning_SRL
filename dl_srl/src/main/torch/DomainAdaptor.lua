@@ -145,31 +145,47 @@ function updateConfusionMatrix(confusion_matrix, real_arg, predicted_arg)
   confusion_matrix[real_arg][predicted_arg] = confusion_matrix[real_arg][predicted_arg] + 1.0
 end
 
-function calculatePrecisionRecallF1(confusion_matrix)
+function printConfusionMatrix(confusion_matrix)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
-  local precision, recall = {}, {}
+  local confusion_matrix = {}
   for cl1, arg1 in ipairs(class_to_arg_dict) do
-    local tp = confusion_matrix[arg1][arg1]
-    local tpfp = 0.0
-    for cl2, arg2 in ipairs(class_to_arg_dict) do
-      tpfp = tpfp + confusion_matrix[arg2][arg1]
-    end
-    precision[arg1] = tp / tpfp
+    io.write(" \t", arg1)
   end
+  io.write(" \n")
   for cl1, arg1 in ipairs(class_to_arg_dict) do
-    local tp = confusion_matrix[arg1][arg1]
-    local tpfn = 0.0
+    io.write(arg1, "\t")
     for cl2, arg2 in ipairs(class_to_arg_dict) do
-      tpfn = tpfn + confusion_matrix[arg1][arg2]
+      io.write(confusion_matrix[arg1][arg2], "\t")
     end
-    recall[arg1] = tp / tpfn
-  end
-  for cl, arg in ipairs(class_to_arg_dict) do
-    print('Class:', arg, 'Precision:', precision[arg], 'Recall:', recall[arg],
-    'F1:', (2 * precision[arg] * recall[arg]) / (precision[arg] + recall[arg]))
   end
 end
+
+--function calculatePrecisionRecallF1(confusion_matrix)
+--  local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
+--  local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
+--  local precision, recall = {}, {}
+--  for cl1, arg1 in ipairs(class_to_arg_dict) do
+--    local tp = confusion_matrix[arg1][arg1]
+--    local tpfp = 0.0
+--    for cl2, arg2 in ipairs(class_to_arg_dict) do
+--      tpfp = tpfp + confusion_matrix[arg2][arg1]
+--    end
+--    precision[arg1] = tp / tpfp
+--  end
+--  for cl1, arg1 in ipairs(class_to_arg_dict) do
+--    local tp = confusion_matrix[arg1][arg1]
+--    local tpfn = 0.0
+--    for cl2, arg2 in ipairs(class_to_arg_dict) do
+--      tpfn = tpfn + confusion_matrix[arg1][arg2]
+--    end
+--    recall[arg1] = tp / tpfn
+--  end
+--  for cl, arg in ipairs(class_to_arg_dict) do
+--    print('Class:', arg, 'Precision:', precision[arg], 'Recall:', recall[arg],
+--    'F1:', (2 * precision[arg] * recall[arg]) / (precision[arg] + recall[arg]))
+--  end
+--end
 
 --Construct Feature Vector instance
 function constructFeatureVecForSentence(predicate_idx, word_of_interest_idx, words)
@@ -291,7 +307,7 @@ function test_SRL(test_sent_start, test_sent_end)
       feature_vecs_for_sent:free()
     end
   end
-  calculatePrecisionRecallF1(confusion_matrix)
+  return confusion_matrix
 end
 
 function loadCheckPt()
@@ -329,8 +345,8 @@ function domain_adapt(isTrain, ins_start, ins_end)
       train(epoch, epoch_checkpt, sent_checkpt, ins_start, ins_end)
     end
   else
-    local accuracy = test_SRL(ins_start, ins_end)
-    --print('Overall Test Accuracy :', accuracy)
+    local confusion_matrix = test_SRL(ins_start, ins_end)
+    printConfusionMatrix(confusion_matrix)
   end
 end
 
