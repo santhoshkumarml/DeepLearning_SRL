@@ -133,9 +133,9 @@ function createConfusionMatrix()
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local confusion_matrix = {}
   for cl1, arg1 in ipairs(class_to_arg_dict) do
-    table.insert(confusionMatrix, arg1, {})
+    confusion_matrix[arg1] = {}
     for cl2, arg2 in ipairs(class_to_arg_dict) do
-      table.insert(confusionMatrix[arg1], arg2, 0.0)
+      confusion_matrix[arg1][arg2] = 0.0
     end
   end
   return confusion_matrix
