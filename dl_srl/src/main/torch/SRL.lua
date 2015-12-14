@@ -273,7 +273,7 @@ if (#arg < 3) then
   error("Not Enough Arguments, Usage: th SRL.lua \"train/test\" sent_start sent_end [clean]") 
 end
 
-local ins_start, ins_end = arg[2], arg[3]
+local ins_start, ins_end = tonumber(arg[2]), tonumber(arg[3])
 
 local isCleanExistingNet = false
 

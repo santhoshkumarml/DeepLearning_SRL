@@ -128,7 +128,7 @@ function findClasNumFromProbs(probs)
 end
 
 --Create And Get Confusion Matrix
-function creatConfusionMatrix()
+function createConfusionMatrix()
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local confusion_matrix = {}
@@ -138,6 +138,7 @@ function creatConfusionMatrix()
       table.insert(confusionMatrix[arg1], arg2, 0.0)
     end
   end
+  return confusion_matrix
 end
 
 function updateConfusionMatrix(confusion_matrix, real_arg, predicted_arg)
@@ -257,12 +258,13 @@ end
 
 
 --Run Test Set
-function test_SRL(test_sent_start, test_sent)
+function test_SRL(test_sent_start, test_sent_end)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local f = io.open(NEW_DOMAIN_SRL_TRAIN_FILE)
   if test_sent_end == -1 then return -1 end
-  local confusion_matrix = creatConfusionMatrix()
+  local confusion_matrix = createConfusionMatrix()
+  print(confusion_matrix)
 
   for sent_num = 1, test_sent_start - 1 do
     local predicate_idx, words, args = f:read(), f:read(), f:read()
@@ -328,7 +330,7 @@ function domain_adapt(isTrain, ins_start, ins_end)
     end
   else
     local accuracy = test_SRL(ins_start, ins_end)
-    print('Overall Test Accuracy :', accuracy)
+    --print('Overall Test Accuracy :', accuracy)
   end
 end
 
@@ -336,7 +338,7 @@ if (#arg < 3) then
   error("Not Enough Arguments, Usage: th DomainAdaptor.lua \"train/test\" sent_start sent_end [clean]")
 end
 
-local ins_start, ins_end = arg[2], arg[3]
+local ins_start, ins_end = tonumber(arg[2]), tonumber(arg[3])
 
 local isCleanExistingNet = false
 
