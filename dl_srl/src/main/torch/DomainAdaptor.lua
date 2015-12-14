@@ -158,6 +158,7 @@ function printConfusionMatrix(confusion_matrix)
     for cl2, arg2 in ipairs(class_to_arg_dict) do
       io.write(confusion_matrix[arg1][arg2], "\t")
     end
+    io.write("\n")
   end
 end
 
