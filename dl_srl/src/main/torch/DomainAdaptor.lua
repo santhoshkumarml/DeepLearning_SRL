@@ -132,9 +132,9 @@ function createConfusionMatrix()
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local confusion_matrix = {}
-  for arg1, cl1 in ipairs(arg_to_class_dict) do
+  for cl1, arg1 in ipairs(class_to_arg_dict) do
     table.insert(confusionMatrix, arg1, {})
-    for arg2, cl2 in ipairs(arg_to_class_dict) do
+    for cl2, arg2 in ipairs(class_to_arg_dict) do
       table.insert(confusionMatrix[arg1], arg2, 0.0)
     end
   end
@@ -149,23 +149,23 @@ function calculatePrecisionRecallF1(confusion_matrix)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local precision, recall = {}, {}
-  for arg1, cl1 in ipairs(arg_to_class_dict) do
+  for cl1, arg1 in ipairs(class_to_arg_dict) do
     local tp = confusion_matrix[arg1][arg1]
     local tpfp = 0.0
-    for arg2, cl1 in ipairs(arg_to_class_dict) do
+    for cl2, arg2 in ipairs(class_to_arg_dict) do
       tpfp = tpfp + confusion_matrix[arg2][arg1]
     end
     precision[arg1] = tp / tpfp
   end
-  for arg1, cl1 in ipairs(arg_to_class_dict) do
+  for cl1, arg1 in ipairs(class_to_arg_dict) do
     local tp = confusion_matrix[arg1][arg1]
     local tpfn = 0.0
-    for arg2, cl1 in ipairs(arg_to_class_dict) do
+    for cl2, arg2 in ipairs(class_to_arg_dict) do
       tpfn = tpfn + confusion_matrix[arg1][arg2]
     end
     recall[arg1] = tp / tpfn
   end
-  for arg, cl in ipairs(arg_to_class_dict) do
+  for cl, arg in ipairs(class_to_arg_dict) do
     print('Class:', arg, 'Precision:', precision[arg], 'Recall:', recall[arg],
     'F1:', (2 * precision[arg] * recall[arg]) / (precision[arg] + recall[arg]))
   end
