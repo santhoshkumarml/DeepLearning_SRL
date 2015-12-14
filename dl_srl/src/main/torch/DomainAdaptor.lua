@@ -146,14 +146,13 @@ function updateConfusionMatrix(confusion_matrix, real_arg, predicted_arg)
 end
 
 function printConfusionMatrix(confusion_matrix)
-  print(confusion_matrix)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
-  local confusion_matrix = {}
+  io.write(" ")
   for cl1, arg1 in ipairs(class_to_arg_dict) do
-    io.write(" \t", arg1)
+    io.write("\t", arg1)
   end
-  io.write(" \n")
+  io.write("\n")
   for cl1, arg1 in ipairs(class_to_arg_dict) do
     io.write(arg1, "\t")
     for cl2, arg2 in ipairs(class_to_arg_dict) do
