@@ -146,6 +146,7 @@ function updateConfusionMatrix(confusion_matrix, real_arg, predicted_arg)
 end
 
 function printConfusionMatrix(confusion_matrix)
+  print(confusion_matrix)
   local arg_ds = torch.load(NEW_DOMAIN_ARGS_DICT_FILE)
   local arg_to_class_dict, class_to_arg_dict = arg_ds[1], arg_ds[2]
   local confusion_matrix = {}
@@ -281,8 +282,6 @@ function test_SRL(test_sent_start, test_sent_end)
   local f = io.open(NEW_DOMAIN_SRL_TRAIN_FILE)
   if test_sent_end == -1 then return -1 end
   local confusion_matrix = createConfusionMatrix()
-  print(confusion_matrix)
-
   for sent_num = 1, test_sent_start - 1 do
     local predicate_idx, words, args = f:read(), f:read(), f:read()
   end
